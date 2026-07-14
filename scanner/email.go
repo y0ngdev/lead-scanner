@@ -12,7 +12,9 @@ import (
 )
 
 // secrets are managed by Encore's secrets system — set with:
-//   encore secret set ResendAPIKey
+//
+//	encore secret set ResendAPIKey
+//
 // Get a free API key at https://resend.com (no credit card needed for
 // the free tier, generous enough for a personal lead digest).
 var secrets struct {
@@ -20,7 +22,7 @@ var secrets struct {
 }
 
 // notifyEmail is where digests get sent. Edit this to your own address.
-const notifyEmail = "you@example.com"
+const notifyEmail = "prosperugbovo@gmail.com"
 
 // emailFrom is the sender address. Resend's shared "onboarding@resend.dev"
 // works immediately with no setup for testing; once you verify your own

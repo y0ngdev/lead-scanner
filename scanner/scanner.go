@@ -245,9 +245,9 @@ func insertLead(ctx context.Context, c candidate, keyword string) (bool, error) 
 
 // ListLeadsParams filters the lead listing.
 type ListLeadsParams struct {
-	Source   *string `query:"source"` // "reddit", "hackernews", or "yc"
-	Reviewed *bool   `query:"reviewed"`
-	Limit    int     `query:"limit"`
+	Source   string `query:"source"`   // "reddit", "hackernews", or "yc"; empty means no filter
+	Reviewed string `query:"reviewed"` // "true" or "false"; empty means no filter
+	Limit    int    `query:"limit"`
 }
 
 // ListLeadsResponse wraps the returned leads.
@@ -273,14 +273,18 @@ func ListLeads(ctx context.Context, params *ListLeadsParams) (*ListLeadsResponse
 	args := []any{}
 	argN := 1
 
-	if params.Source != nil {
+	if params.Source != "" {
 		query += " AND source = $" + strconv.Itoa(argN)
-		args = append(args, *params.Source)
+		args = append(args, params.Source)
 		argN++
 	}
-	if params.Reviewed != nil {
+	if params.Reviewed != "" {
+		reviewed, err := strconv.ParseBool(params.Reviewed)
+		if err != nil {
+			return nil, err
+		}
 		query += " AND reviewed = $" + strconv.Itoa(argN)
-		args = append(args, *params.Reviewed)
+		args = append(args, reviewed)
 		argN++
 	}
 	query += " ORDER BY found_at DESC LIMIT $" + strconv.Itoa(argN)
