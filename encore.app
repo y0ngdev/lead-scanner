@@ -1,3 +1,3 @@
 {
-	"id": "lead-scanner"
+	"id": "lead-scanner-rsqi",
 }
