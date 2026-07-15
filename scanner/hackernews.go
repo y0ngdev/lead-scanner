@@ -117,9 +117,11 @@ func fetchHNItem(ctx context.Context, id int) (*hnItem, error) {
 func firstLine(text string) string {
 	const maxLen = 120
 	// HN comment text is HTML; a raw first-N-chars snippet is good enough
-	// for display purposes without pulling in an HTML parser.
-	if len(text) <= maxLen {
+	// for display purposes without pulling in an HTML parser. Truncate by
+	// rune, not byte, so we don't split a multi-byte UTF-8 sequence in half.
+	runes := []rune(text)
+	if len(runes) <= maxLen {
 		return text
 	}
-	return text[:maxLen] + "..."
+	return string(runes[:maxLen]) + "..."
 }
