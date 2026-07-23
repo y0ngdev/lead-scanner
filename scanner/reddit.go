@@ -97,11 +97,21 @@ func redditAccessToken() (string, error) {
 	return tok.AccessToken, nil
 }
 
-// fetchNewPosts pulls the newest posts from a subreddit via Reddit's
-// authenticated OAuth API. Reddit blocks anonymous scraping of its public
-// www.reddit.com/*.json endpoints from most cloud/datacenter IPs, so an
-// app-only OAuth token (no user login required) is used instead.
+// fetchNewPosts pulls the newest posts from a subreddit. It prefers Reddit's
+// authenticated OAuth API (reliable, but needs RedditClientID/Secret set up
+// via reddit.com/prefs/apps) and falls back to an anonymous scrape of
+// old.reddit.com's public JSON endpoint if those secrets aren't set yet —
+// that fallback is best-effort, since it's the same anonymous access Reddit
+// has been known to block from some IPs, but it costs nothing to try rather
+// than hard-failing the whole source until OAuth is configured.
 func fetchNewPosts(subreddit string) ([]redditPost, error) {
+	if secrets.RedditClientID != "" && secrets.RedditClientSecret != "" {
+		return fetchNewPostsOAuth(subreddit)
+	}
+	return fetchNewPostsAnonymous(subreddit)
+}
+
+func fetchNewPostsOAuth(subreddit string) ([]redditPost, error) {
 	token, err := redditAccessToken()
 	if err != nil {
 		return nil, fmt.Errorf("getting reddit access token: %w", err)
@@ -115,6 +125,28 @@ func fetchNewPosts(subreddit string) ([]redditPost, error) {
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("User-Agent", redditUserAgent)
 
+	return doRedditRequest(req, subreddit)
+}
+
+// fetchNewPostsAnonymous scrapes old.reddit.com's public JSON listing with
+// no auth. Best-effort: Reddit has been known to 403 this from cloud IPs
+// regardless of headers, but old.reddit.com plus a realistic browser
+// User-Agent survives more often than the placeholder bot UA this used to
+// send to www.reddit.com.
+func fetchNewPostsAnonymous(subreddit string) ([]redditPost, error) {
+	reqURL := fmt.Sprintf("https://old.reddit.com/r/%s/new.json?limit=25", subreddit)
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
+
+	return doRedditRequest(req, subreddit)
+}
+
+// doRedditRequest sends a prepared Reddit listing request and decodes the
+// response, shared by both the OAuth and anonymous-fallback paths.
+func doRedditRequest(req *http.Request, subreddit string) ([]redditPost, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
