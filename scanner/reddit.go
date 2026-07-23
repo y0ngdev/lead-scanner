@@ -100,13 +100,15 @@ func redditAccessToken() (string, error) {
 // fetchNewPosts pulls the newest posts from a subreddit. It prefers Reddit's
 // authenticated OAuth API (reliable, but needs RedditClientID/Secret set up
 // via reddit.com/prefs/apps) and falls back to an anonymous scrape of
-// old.reddit.com's public JSON endpoint if those secrets aren't set yet —
-// that fallback is best-effort, since it's the same anonymous access Reddit
-// has been known to block from some IPs, but it costs nothing to try rather
-// than hard-failing the whole source until OAuth is configured.
+// old.reddit.com's public JSON endpoint if the OAuth attempt fails for any
+// reason — secrets not set yet, a placeholder/invalid value, or Reddit
+// rejecting the request. That fallback is best-effort, since it's the same
+// anonymous access Reddit has been known to block from some IPs, but it
+// costs nothing to try rather than hard-failing the whole source until
+// OAuth is fully working.
 func fetchNewPosts(subreddit string) ([]redditPost, error) {
-	if secrets.RedditClientID != "" && secrets.RedditClientSecret != "" {
-		return fetchNewPostsOAuth(subreddit)
+	if posts, err := fetchNewPostsOAuth(subreddit); err == nil {
+		return posts, nil
 	}
 	return fetchNewPostsAnonymous(subreddit)
 }
