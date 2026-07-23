@@ -55,6 +55,10 @@ type ScanResult struct {
 	YCJobsChecked      int `json:"yc_jobs_checked"`
 	WWRJobsChecked     int `json:"wwr_jobs_checked"`
 	DevRelJobsChecked  int `json:"devrel_jobs_checked"`
+	GreenhouseChecked  int `json:"greenhouse_checked"`
+	LeverChecked       int `json:"lever_checked"`
+	AshbyChecked       int `json:"ashby_checked"`
+	WorkableChecked    int `json:"workable_checked"`
 	NewLeads           int `json:"new_leads"`
 }
 
@@ -175,12 +179,87 @@ func Scan(ctx context.Context) (*ScanResult, error) {
 		}
 	}
 
+	// Greenhouse, Lever, Ashby, Workable: per-company ATS job boards. Each
+	// is a no-op until you add company slugs to config.go, since none of
+	// these platforms offer a cross-company search API.
+	greenhouseCandidates, err := fetchGreenhouseJobs(ctx)
+	if err != nil {
+		rlog.Error("greenhouse scan failed", "err", err)
+	}
+	for _, c := range greenhouseCandidates {
+		result.GreenhouseChecked++
+		lead, err := processCandidate(ctx, c)
+		if err != nil {
+			rlog.Error("failed to process greenhouse candidate", "id", c.ExternalID, "err", err)
+			continue
+		}
+		if lead != nil {
+			result.NewLeads++
+			newLeads = append(newLeads, *lead)
+		}
+	}
+
+	leverCandidates, err := fetchLeverJobs(ctx)
+	if err != nil {
+		rlog.Error("lever scan failed", "err", err)
+	}
+	for _, c := range leverCandidates {
+		result.LeverChecked++
+		lead, err := processCandidate(ctx, c)
+		if err != nil {
+			rlog.Error("failed to process lever candidate", "id", c.ExternalID, "err", err)
+			continue
+		}
+		if lead != nil {
+			result.NewLeads++
+			newLeads = append(newLeads, *lead)
+		}
+	}
+
+	ashbyCandidates, err := fetchAshbyJobs(ctx)
+	if err != nil {
+		rlog.Error("ashby scan failed", "err", err)
+	}
+	for _, c := range ashbyCandidates {
+		result.AshbyChecked++
+		lead, err := processCandidate(ctx, c)
+		if err != nil {
+			rlog.Error("failed to process ashby candidate", "id", c.ExternalID, "err", err)
+			continue
+		}
+		if lead != nil {
+			result.NewLeads++
+			newLeads = append(newLeads, *lead)
+		}
+	}
+
+	workableCandidates, err := fetchWorkableJobs(ctx)
+	if err != nil {
+		rlog.Error("workable scan failed", "err", err)
+	}
+	for _, c := range workableCandidates {
+		result.WorkableChecked++
+		lead, err := processCandidate(ctx, c)
+		if err != nil {
+			rlog.Error("failed to process workable candidate", "id", c.ExternalID, "err", err)
+			continue
+		}
+		if lead != nil {
+			result.NewLeads++
+			newLeads = append(newLeads, *lead)
+		}
+	}
+
 	rlog.Info("scan complete",
 		"reddit_checked", result.RedditPostsChecked,
 		"hn_checked", result.HNCommentsChecked,
 		"yc_checked", result.YCJobsChecked,
 		"wwr_checked", result.WWRJobsChecked,
 		"devrel_checked", result.DevRelJobsChecked,
+		"greenhouse_checked", result.GreenhouseChecked,
+		"lever_checked", result.LeverChecked,
+		"ashby_checked", result.AshbyChecked,
+		"workable_checked", result.WorkableChecked,
 		"new_leads", result.NewLeads,
 	)
 

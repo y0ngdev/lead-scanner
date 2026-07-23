@@ -16,7 +16,8 @@ import (
 // expected occasionally, not a sign the whole scanner is broken.
 //
 // jobLinkPattern matches anchors like:
-//   <a href="/companies/some-startup/jobs/abc123-senior-engineer">Senior Engineer</a>
+//
+//	<a href="/companies/some-startup/jobs/abc123-senior-engineer">Senior Engineer</a>
 var jobLinkPattern = regexp.MustCompile(`<a[^>]+href="(/companies/[^"]+/jobs/[^"]+)"[^>]*>([^<]+)</a>`)
 
 // fetchYCJobs scrapes YC's public jobs listing page for open roles.

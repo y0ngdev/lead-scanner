@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
+	"sync"
 	"time"
 )
 
-// redditListing mirrors the subset of Reddit's public JSON listing
-// response (https://www.reddit.com/r/<sub>/new.json) that we care about.
+// redditListing mirrors the subset of Reddit's OAuth JSON listing response
+// (https://oauth.reddit.com/r/<sub>/new) that we care about.
 type redditListing struct {
 	Data struct {
 		Children []struct {
@@ -28,17 +30,90 @@ type redditPost struct {
 	CreatedUTC float64 `json:"created_utc"`
 }
 
-// fetchNewPosts pulls the newest posts from a subreddit's public JSON feed.
-// No auth is required for this read-only endpoint, but Reddit requires a
-// descriptive User-Agent and enforces rate limits, so keep calls modest.
-func fetchNewPosts(subreddit string) ([]redditPost, error) {
-	url := fmt.Sprintf("https://www.reddit.com/r/%s/new.json?limit=25", subreddit)
+// redditUserAgent identifies us to Reddit per their API rules. The format
+// Reddit recommends is "<platform>:<app id>:<version> (by /u/<username>)".
+const redditUserAgent = "golang:lead-scanner:v1.0 (by /u/leadscannerbot)"
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+// redditTokenCache holds the app-only OAuth access token so we don't fetch a
+// fresh one on every subreddit request; Reddit tokens are valid for ~1 hour.
+var redditTokenCache struct {
+	mu        sync.Mutex
+	value     string
+	expiresAt time.Time
+}
+
+// redditAccessToken returns a cached OAuth app-only ("client_credentials")
+// access token, fetching a new one if missing or expired. This is what lets
+// us call oauth.reddit.com instead of the public www.reddit.com/*.json
+// endpoints, which Reddit blocks for most cloud/datacenter IPs regardless of
+// User-Agent.
+func redditAccessToken() (string, error) {
+	redditTokenCache.mu.Lock()
+	defer redditTokenCache.mu.Unlock()
+
+	if redditTokenCache.value != "" && time.Now().Before(redditTokenCache.expiresAt) {
+		return redditTokenCache.value, nil
+	}
+
+	if secrets.RedditClientID == "" || secrets.RedditClientSecret == "" {
+		return "", fmt.Errorf("RedditClientID/RedditClientSecret secrets not set — register an app at https://www.reddit.com/prefs/apps and run 'encore secret set RedditClientID' / 'encore secret set RedditClientSecret'")
+	}
+
+	form := url.Values{"grant_type": {"client_credentials"}}
+	req, err := http.NewRequest(http.MethodPost, "https://www.reddit.com/api/v1/access_token", strings.NewReader(form.Encode()))
+	if err != nil {
+		return "", err
+	}
+	req.SetBasicAuth(secrets.RedditClientID, secrets.RedditClientSecret)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", redditUserAgent)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("fetching reddit access token: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("reddit access token endpoint returned status %d", resp.StatusCode)
+	}
+
+	var tok struct {
+		AccessToken string `json:"access_token"`
+		ExpiresIn   int    `json:"expires_in"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&tok); err != nil {
+		return "", fmt.Errorf("decoding reddit access token: %w", err)
+	}
+	if tok.AccessToken == "" {
+		return "", fmt.Errorf("reddit access token response missing access_token")
+	}
+
+	redditTokenCache.value = tok.AccessToken
+	// Renew a bit early so we never fire a request with a token that expires
+	// mid-flight.
+	redditTokenCache.expiresAt = time.Now().Add(time.Duration(tok.ExpiresIn-30) * time.Second)
+	return tok.AccessToken, nil
+}
+
+// fetchNewPosts pulls the newest posts from a subreddit via Reddit's
+// authenticated OAuth API. Reddit blocks anonymous scraping of its public
+// www.reddit.com/*.json endpoints from most cloud/datacenter IPs, so an
+// app-only OAuth token (no user login required) is used instead.
+func fetchNewPosts(subreddit string) ([]redditPost, error) {
+	token, err := redditAccessToken()
+	if err != nil {
+		return nil, fmt.Errorf("getting reddit access token: %w", err)
+	}
+
+	reqURL := fmt.Sprintf("https://oauth.reddit.com/r/%s/new?limit=25", subreddit)
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", "reddit-lead-scanner/1.0 (by u/your-username)")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("User-Agent", redditUserAgent)
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
@@ -65,7 +140,7 @@ func fetchNewPosts(subreddit string) ([]redditPost, error) {
 
 // matchKeywordText returns the first configured keyword found anywhere in
 // the given text, and whether a match was found at all. Shared across all
-// sources (Reddit, HN, YC).
+// sources (Reddit, HN, YC, ATS boards).
 func matchKeywordText(text string) (string, bool) {
 	haystack := strings.ToLower(text)
 	for _, kw := range keywords {

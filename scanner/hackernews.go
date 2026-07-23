@@ -21,12 +21,12 @@ type hnSearchResult struct {
 }
 
 type hnItem struct {
-	ID       int      `json:"id"`
-	Children []hnItem `json:"children"`
-	Text     string   `json:"text"`
-	Author   string   `json:"author"`
-	CreatedAt string  `json:"created_at"`
-	Type     string   `json:"type"`
+	ID        int      `json:"id"`
+	Children  []hnItem `json:"children"`
+	Text      string   `json:"text"`
+	Author    string   `json:"author"`
+	CreatedAt string   `json:"created_at"`
+	Type      string   `json:"type"`
 }
 
 // fetchHNWhoIsHiring finds the most recent monthly "Ask HN: Who is hiring?"

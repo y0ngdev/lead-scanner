@@ -37,6 +37,21 @@ var keywords = []string{
 	"need someone to build",
 }
 
+// ATS (applicant tracking system) company boards to poll for new postings.
+// Unlike YC/WWR, these platforms don't offer a cross-company search API —
+// only a public per-company job board — so there's nothing to scan until
+// you add the company slugs you actually care about. Find a slug from a
+// company's careers page URL, e.g.:
+//
+//	boards.greenhouse.io/<slug>       -> greenhouseCompanies
+//	jobs.lever.co/<slug>              -> leverCompanies
+//	jobs.ashbyhq.com/<slug>           -> ashbyCompanies
+//	apply.workable.com/<slug>         -> workableCompanies
+var greenhouseCompanies = []string{}
+var leverCompanies = []string{}
+var ashbyCompanies = []string{}
+var workableCompanies = []string{}
+
 // ycJobsURL is YC's public jobs listing. No auth needed, but this is a
 // best-effort HTML scrape (YC has no public jobs API) so it's more
 // fragile than the Reddit/HN sources if they change their markup.

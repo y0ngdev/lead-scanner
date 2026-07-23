@@ -14,11 +14,20 @@ import (
 // secrets are managed by Encore's secrets system — set with:
 //
 //	encore secret set ResendAPIKey
+//	encore secret set RedditClientID
+//	encore secret set RedditClientSecret
 //
-// Get a free API key at https://resend.com (no credit card needed for
-// the free tier, generous enough for a personal lead digest).
+// Get a free Resend API key at https://resend.com (no credit card needed
+// for the free tier, generous enough for a personal lead digest).
+//
+// Get Reddit OAuth app credentials by registering a free "script" app at
+// https://www.reddit.com/prefs/apps — needed because Reddit blocks
+// anonymous/unauthenticated scraping of its public JSON endpoints from most
+// cloud/datacenter IPs.
 var secrets struct {
-	ResendAPIKey string
+	ResendAPIKey       string
+	RedditClientID     string
+	RedditClientSecret string
 }
 
 // notifyEmail is where digests get sent. Edit this to your own address.

@@ -15,7 +15,9 @@ import (
 // inactive) and DevRel Careers (down for maintenance) used to cover.
 //
 // jobLinkPattern matches anchors like:
-//   <a href="/jobs/neo4j-senior-developer-advocate-656">...<span>title/company/location text</span>...</a>
+//
+//	<a href="/jobs/neo4j-senior-developer-advocate-656">...<span>title/company/location text</span>...</a>
+//
 // The (?s) flag lets '.' match newlines since real markup nests tags.
 var devRelJobLinkPattern = regexp.MustCompile(`(?s)<a[^>]+href="(/jobs/[^"]+)"[^>]*>(.*?)</a>`)
 var stripTagsPattern = regexp.MustCompile(`<[^>]+>`)
