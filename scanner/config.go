@@ -17,11 +17,24 @@ var subreddits = []string{
 // Matching is case-insensitive and checked against title + body.
 var keywords = []string{
 	"technical writer",
+	"technical content engineer",
+	"technical content manager",
+	"content engineer",
+	"documentation engineer",
+	"docs engineer",
+	"knowledge engineer",
+	"information developer",
+	"API technical writer",
+	"developer content",
+	"content strategist",
+	"technical writing",
 	"looking for a developer",
 	"hiring a developer",
 	"need a developer",
 	"go developer",
-	"golang developer",
+	"go engineer",
+	"golang",
+	"laravel",
 	"backend engineer",
 	"backend developer",
 	"full stack developer",
@@ -35,6 +48,11 @@ var keywords = []string{
 	"devrel",
 	"looking to hire",
 	"need someone to build",
+	"remote developer",
+	"remote backend",
+	"remote role",
+	"remote position",
+	"hiring remote",
 }
 
 // ATS (applicant tracking system) company boards to poll for new postings.
