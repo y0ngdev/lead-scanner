@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lead Scanner & Application Pipeline Manager</title>
+  <meta name="description" content="Manage job leads and track your job applications pipeline across Ashby, Greenhouse, Lever, Workable, YC, and more.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="scanner/ui/style.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo">⚡</div>
+      <div class="brand-text">
+        <h1>Lead Scanner</h1>
+        <span class="brand-badge">Pipeline Manager</span>
+      </div>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="nav-tabs" aria-label="Main Navigation">
+      <button class="tab-btn active" id="tab-applications" onclick="switchTab('applications')">
+        <span>📋 Applications</span>
+        <span class="tab-count" id="count-applications">0</span>
+      </button>
+      <button class="tab-btn" id="tab-leads" onclick="switchTab('leads')">
+        <span>🎯 Leads Queue</span>
+        <span class="tab-count" id="count-leads">0</span>
+      </button>
+      <button class="tab-btn" id="tab-analytics" onclick="switchTab('analytics')">
+        <span>📊 Pipeline Stats</span>
+      </button>
+    </nav>
+
+    <!-- Header Actions -->
+    <div class="header-actions">
+      <button class="btn btn-secondary btn-sm" id="btn-run-scan" onclick="triggerScan()" title="Trigger a live scan across all job boards">
+        <span id="scan-icon">⚡</span>
+        <span id="scan-text">Run Scan</span>
+      </button>
+      <button class="btn btn-primary btn-sm" onclick="openAddApplicationModal()">
+        <span>+ Add Application</span>
+      </button>
+      <button class="btn btn-ghost" onclick="openSettingsModal()" title="API Settings">
+        ⚙️
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+
+    <!-- Top Stats Ribbon -->
+    <section class="stats-ribbon" aria-label="Pipeline Metrics">
+      <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--accent-indigo);">📂</div>
+        <div>
+          <div class="stat-val" id="stat-total">0</div>
+          <div class="stat-label">Total Applications</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(129, 140, 248, 0.15); color: var(--status-applied);">📤</div>
+        <div>
+          <div class="stat-val" id="stat-applied">0</div>
+          <div class="stat-label">Applied</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(192, 132, 252, 0.15); color: var(--status-interviewing);">💬</div>
+        <div>
+          <div class="stat-val" id="stat-interviewing">0</div>
+          <div class="stat-label">In Interviews</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(52, 211, 153, 0.15); color: var(--status-offer);">🎉</div>
+        <div>
+          <div class="stat-val" id="stat-offer">0</div>
+          <div class="stat-label">Offers</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan);">📈</div>
+        <div>
+          <div class="stat-val" id="stat-rate">0%</div>
+          <div class="stat-label">Response Rate</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 1: Applications Pipeline -->
+    <div id="view-applications" class="view-panel">
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="app-search" placeholder="Search company, role, notes..." oninput="handleAppSearch()">
+          </div>
+
+          <select id="app-status-filter" class="select-filter" onchange="handleAppFilter()">
+            <option value="all">All Stages</option>
+            <option value="wishlist">📌 Wishlist</option>
+            <option value="applied">📤 Applied</option>
+            <option value="screening">📞 Screening</option>
+            <option value="interviewing">💻 Interviewing</option>
+            <option value="offer">🎉 Offer</option>
+            <option value="rejected">❌ Rejected</option>
+            <option value="withdrawn">📁 Withdrawn</option>
+          </select>
+        </div>
+
+        <div class="toolbar-right">
+          <div class="view-mode-toggle">
+            <button class="view-mode-btn active" id="mode-kanban" onclick="setViewMode('kanban')">
+              <span>☷ Kanban</span>
+            </button>
+            <button class="view-mode-btn" id="mode-table" onclick="setViewMode('table')">
+              <span>☰ Table</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kanban Board -->
+      <div id="kanban-view" class="kanban-board">
+        <!-- 1. Wishlist -->
+        <div class="kanban-column" data-status="wishlist" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'wishlist')">
+          <div class="column-header">
+            <div class="column-title">
+              <span class="column-dot" style="background: var(--status-wishlist);"></span>
+              <span>Wishlist</span>
+            </div>
+            <span class="column-badge" id="badge-wishlist">0</span>
+          </div>
+          <div class="column-cards" id="cards-wishlist"></div>
+        </div>
+
+        <!-- 2. Applied -->
+        <div class="kanban-column" data-status="applied" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'applied')">
+          <div class="column-header">
+            <div class="column-title">
+              <span class="column-dot" style="background: var(--status-applied);"></span>
+              <span>Applied</span>
+            </div>
+            <span class="column-badge" id="badge-applied">0</span>
+          </div>
+          <div class="column-cards" id="cards-applied"></div>
+        </div>
+
+        <!-- 3. Screening -->
+        <div class="kanban-column" data-status="screening" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'screening')">
+          <div class="column-header">
+            <div class="column-title">
+              <span class="column-dot" style="background: var(--status-screening);"></span>
+              <span>Screening</span>
+            </div>
+            <span class="column-badge" id="badge-screening">0</span>
+          </div>
+          <div class="column-cards" id="cards-screening"></div>
+        </div>
+
+        <!-- 4. Interviewing -->
+        <div class="kanban-column" data-status="interviewing" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'interviewing')">
+          <div class="column-header">
+            <div class="column-title">
+              <span class="column-dot" style="background: var(--status-interviewing);"></span>
+              <span>Interviewing</span>
+            </div>
+            <span class="column-badge" id="badge-interviewing">0</span>
+          </div>
+          <div class="column-cards" id="cards-interviewing"></div>
+        </div>
+
+        <!-- 5. Offer -->
+        <div class="kanban-column" data-status="offer" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'offer')">
+          <div class="column-header">
+            <div class="column-title">
+              <span class="column-dot" style="background: var(--status-offer);"></span>
+              <span>Offer</span>
+            </div>
+            <span class="column-badge" id="badge-offer">0</span>
+          </div>
+          <div class="column-cards" id="cards-offer"></div>
+        </div>
+
+        <!-- 6. Rejected -->
+        <div class="kanban-column" data-status="rejected" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'rejected')">
+          <div class="column-header">
+            <div class="column-title">
+              <span class="column-dot" style="background: var(--status-rejected);"></span>
+              <span>Rejected / Closed</span>
+            </div>
+            <span class="column-badge" id="badge-rejected">0</span>
+          </div>
+          <div class="column-cards" id="cards-rejected"></div>
+        </div>
+      </div>
+
+      <!-- Table View (Hidden by default) -->
+      <div id="table-view" class="table-container" style="display: none;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Company & Role</th>
+              <th>Stage</th>
+              <th>Source</th>
+              <th>Applied Date</th>
+              <th>Salary / Location</th>
+              <th>Next Step</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="applications-table-body">
+            <!-- populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VIEW 2: Leads Discovery Queue -->
+    <div id="view-leads" class="view-panel" style="display: none;">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="lead-search" placeholder="Search keywords in leads..." oninput="handleLeadSearch()">
+          </div>
+
+          <select id="lead-source-filter" class="select-filter" onchange="loadLeads()">
+            <option value="">All Sources</option>
+            <option value="ashby">Ashby</option>
+            <option value="greenhouse">Greenhouse</option>
+            <option value="lever">Lever</option>
+            <option value="workable">Workable</option>
+            <option value="google-dork">Google Dork (Serper)</option>
+            <option value="yc">Y Combinator</option>
+            <option value="hackernews">Hacker News</option>
+            <option value="weworkremotely">We Work Remotely</option>
+            <option value="reddit">Reddit</option>
+            <option value="devrel-jobs">DevRel Jobs</option>
+          </select>
+
+          <select id="lead-review-filter" class="select-filter" onchange="loadLeads()">
+            <option value="false">Unreviewed Only</option>
+            <option value="true">Reviewed Only</option>
+            <option value="">All Leads</option>
+          </select>
+        </div>
+
+        <div class="toolbar-right">
+          <button class="btn btn-secondary btn-sm" onclick="loadLeads()">
+            ↻ Refresh Leads
+          </button>
+        </div>
+      </div>
+
+      <div class="leads-grid" id="leads-container">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <!-- VIEW 3: Analytics & Pipeline Insights -->
+    <div id="view-analytics" class="view-panel" style="display: none;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
+        
+        <!-- Pipeline Funnel -->
+        <div class="stat-card" style="flex-direction: column; align-items: stretch; gap: 1rem;">
+          <h3 style="font-family: var(--font-display); font-size: 1.1rem; color: #fff;">Application Funnel</h3>
+          <div id="funnel-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <!-- populated by JS -->
+          </div>
+        </div>
+
+        <!-- Upcoming Next Steps & Reminders -->
+        <div class="stat-card" style="flex-direction: column; align-items: stretch; gap: 1rem;">
+          <h3 style="font-family: var(--font-display); font-size: 1.1rem; color: #fff;">Upcoming Next Steps & Interviews</h3>
+          <div id="upcoming-reminders-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <!-- populated by JS -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: Add / Edit Application -->
+  <div class="modal-overlay" id="application-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-app-title">Track New Application</h3>
+        <button class="icon-btn" onclick="closeApplicationModal()">✕</button>
+      </div>
+      <form id="app-form" onsubmit="handleSaveApplication(event)">
+        <input type="hidden" id="form-app-id">
+        <input type="hidden" id="form-lead-id">
+
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-company">Company *</label>
+              <input type="text" id="form-company" required placeholder="e.g. Stripe, Linear, Perplexity">
+            </div>
+            <div class="form-group">
+              <label for="form-role">Role / Job Title *</label>
+              <input type="text" id="form-role" required placeholder="e.g. Senior Software Engineer">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-status">Pipeline Stage</label>
+              <select id="form-status">
+                <option value="wishlist">📌 Wishlist</option>
+                <option value="applied" selected>📤 Applied</option>
+                <option value="screening">📞 Screening (Phone Screen)</option>
+                <option value="interviewing">💻 Interviewing (Tech/Onsite)</option>
+                <option value="offer">🎉 Offer Received</option>
+                <option value="rejected">❌ Rejected</option>
+                <option value="withdrawn">📁 Withdrawn</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="form-applied-date">Date Applied</label>
+              <input type="date" id="form-applied-date">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-source">Source</label>
+              <select id="form-source">
+                <option value="ashby">Ashby</option>
+                <option value="greenhouse">Greenhouse</option>
+                <option value="lever">Lever</option>
+                <option value="workable">Workable</option>
+                <option value="google-dork">Google Dork (Serper)</option>
+                <option value="yc">Y Combinator</option>
+                <option value="hackernews">Hacker News</option>
+                <option value="weworkremotely">We Work Remotely</option>
+                <option value="reddit">Reddit</option>
+                <option value="referral">Referral / Network</option>
+                <option value="manual">Company Website / Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="form-salary">Salary / Range</label>
+              <input type="text" id="form-salary" placeholder="e.g. $160,000 - $190,000">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-location">Location</label>
+              <input type="text" id="form-location" placeholder="e.g. Remote, San Francisco, New York">
+            </div>
+            <div class="form-group">
+              <label for="form-job-url">Job Posting URL</label>
+              <input type="url" id="form-job-url" placeholder="https://...">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-contact-name">Contact / Recruiter Name</label>
+              <input type="text" id="form-contact-name" placeholder="e.g. Sarah Connor">
+            </div>
+            <div class="form-group">
+              <label for="form-contact-email">Contact Email / LinkedIn</label>
+              <input type="text" id="form-contact-email" placeholder="e.g. sarah@company.com">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-next-step">Next Step / Action Item</label>
+              <input type="text" id="form-next-step" placeholder="e.g. System Design interview with engineering team">
+            </div>
+            <div class="form-group">
+              <label for="form-next-step-date">Next Step Due Date</label>
+              <input type="date" id="form-next-step-date">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="form-notes">Notes, Questions & Preparation</label>
+            <textarea id="form-notes" placeholder="Company mission, tech stack details, questions for the hiring manager, interview feedback..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeApplicationModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-app">Save Application</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Settings -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-container" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3>Scanner & API Settings</h3>
+        <button class="icon-btn" onclick="closeSettingsModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="setting-api-url">Encore API Base URL</label>
+          <input type="text" id="setting-api-url" placeholder="http://localhost:4000">
+          <small style="color: var(--text-dim); font-size: 0.75rem; margin-top: 0.25rem;">
+            Defaults to current domain if served via Encore, or http://localhost:4000 when opened locally.
+          </small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeSettingsModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveSettings()">Save & Reconnect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="scanner/ui/app.js"></script>
+</body>
+</html>

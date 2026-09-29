@@ -77,16 +77,38 @@ spammed on quiet runs.
 - Once you verify your own domain in Resend, switch `emailFrom` in
   `scanner/email.go` to something like `leads@yourdomain.com`.
 - A failed email send is logged but never fails the scan — leads are
-  already safely stored either way, so you can always check `/leads`.
+  already safely stored either way, so you can always check `/leads` or the dashboard.
+
+## Web Dashboard & Application Pipeline View
+
+When you run `encore run`, a modern, responsive web application is automatically served at:
+- **`http://localhost:4000/`** (or `/ui`)
+
+### Dashboard Features
+- **Application Pipeline (Kanban & Table Views)**: Drag-and-drop or switch stages across **Wishlist**, **Applied**, **Screening**, **Interviewing**, **Offer**, and **Rejected**.
+- **1-Click Lead Conversion**: Browse scanned leads from Ashby, Greenhouse, Lever, Workable, YC, Reddit, HN, and Google Dork; click **"+ Track / Apply"** to convert any lead into an application with pre-filled company, role, URL, and snippet notes.
+- **Next Steps & Deadlines**: Track recruiter contacts, scheduled interviews, system design rounds, and follow-up reminder dates.
+- **Pipeline Analytics**: Real-time response rate (%), stage breakdown, and upcoming interview reminders.
+- **Manual & Triggered Scans**: Trigger an instant scan across all job boards with one click from the header.
 
 ## API
 
+### Leads
 - `POST /scan` — trigger a scan manually (also runs on a 30-min cron).
 - `GET /leads?reviewed=false&source=devrel-jobs&limit=50` — list leads,
   newest first. `source` values: `reddit`, `hackernews`, `weworkremotely`,
   `yc`, `devrel-jobs`, `greenhouse`, `lever`, `ashby`, `workable`,
   `google-dork`. Both filters are optional.
 - `POST /leads/:id/review` — mark a lead as actioned.
+
+### Applications Pipeline
+- `GET /applications` — list tracked applications (filters: `?status=interviewing`, `?search=stripe`).
+- `GET /applications/stats` — summary counts across pipeline stages, active count, and response rate.
+- `POST /applications` — create a new application (optionally link `lead_id` to auto-mark lead reviewed).
+- `GET /applications/:id` — get application details.
+- `PATCH /applications/:id` — update status, salary, interview dates, or notes.
+- `DELETE /applications/:id` — remove an application.
+- `GET /` or `GET /ui` — serves the interactive Application Manager web UI.
 
 ## Customizing
 

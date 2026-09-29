@@ -5,6 +5,7 @@ package scanner
 
 import (
 	"context"
+	"database/sql"
 	"strconv"
 	"time"
 
@@ -45,6 +46,7 @@ type Lead struct {
 	CreatedUTC     time.Time `json:"created_utc"`
 	FoundAt        time.Time `json:"found_at"`
 	Reviewed       bool      `json:"reviewed"`
+	ApplicationID  *int64    `json:"application_id,omitempty"`
 }
 
 // ScanResult summarizes the outcome of a scan run, broken down by source
@@ -368,14 +370,18 @@ func ListLeads(ctx context.Context, params *ListLeadsParams) (*ListLeadsResponse
 	}
 
 	query := `
-		SELECT id, source, subreddit, post_id, title, body, author, url, matched_keyword, score, created_utc, found_at, reviewed
-		FROM leads WHERE 1=1
+		SELECT l.id, l.source, l.subreddit, l.post_id, l.title, l.body, l.author, l.url,
+		       l.matched_keyword, l.score, l.created_utc, l.found_at, l.reviewed,
+		       a.id AS application_id
+		FROM leads l
+		LEFT JOIN applications a ON a.lead_id = l.id
+		WHERE 1=1
 	`
 	args := []any{}
 	argN := 1
 
 	if params.Source != "" {
-		query += " AND source = $" + strconv.Itoa(argN)
+		query += " AND l.source = $" + strconv.Itoa(argN)
 		args = append(args, params.Source)
 		argN++
 	}
@@ -384,11 +390,11 @@ func ListLeads(ctx context.Context, params *ListLeadsParams) (*ListLeadsResponse
 		if err != nil {
 			return nil, err
 		}
-		query += " AND reviewed = $" + strconv.Itoa(argN)
+		query += " AND l.reviewed = $" + strconv.Itoa(argN)
 		args = append(args, reviewed)
 		argN++
 	}
-	query += " ORDER BY found_at DESC LIMIT $" + strconv.Itoa(argN)
+	query += " ORDER BY l.found_at DESC LIMIT $" + strconv.Itoa(argN)
 	args = append(args, limit)
 
 	rows, err := db.Query(ctx, query, args...)
@@ -400,9 +406,14 @@ func ListLeads(ctx context.Context, params *ListLeadsParams) (*ListLeadsResponse
 	leads := []Lead{}
 	for rows.Next() {
 		var l Lead
+		var appID sql.NullInt64
 		if err := rows.Scan(&l.ID, &l.Source, &l.Subreddit, &l.PostID, &l.Title, &l.Body, &l.Author, &l.URL,
-			&l.MatchedKeyword, &l.Score, &l.CreatedUTC, &l.FoundAt, &l.Reviewed); err != nil {
+			&l.MatchedKeyword, &l.Score, &l.CreatedUTC, &l.FoundAt, &l.Reviewed, &appID); err != nil {
 			return nil, err
+		}
+		if appID.Valid {
+			v := appID.Int64
+			l.ApplicationID = &v
 		}
 		leads = append(leads, l)
 	}
