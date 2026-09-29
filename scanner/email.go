@@ -28,6 +28,7 @@ var secrets struct {
 	ResendAPIKey       string
 	RedditClientID     string
 	RedditClientSecret string
+	SerperAPIKey       string // optional — enables Google Dork scanning via serper.dev
 }
 
 // notifyEmail is where digests get sent. Edit this to your own address.

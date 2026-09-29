@@ -59,6 +59,7 @@ type ScanResult struct {
 	LeverChecked       int `json:"lever_checked"`
 	AshbyChecked       int `json:"ashby_checked"`
 	WorkableChecked    int `json:"workable_checked"`
+	GoogleDorkChecked  int `json:"google_dork_checked"`
 	NewLeads           int `json:"new_leads"`
 }
 
@@ -250,6 +251,26 @@ func Scan(ctx context.Context) (*ScanResult, error) {
 		}
 	}
 
+	// Google Dork: runs site: queries via Serper.dev across all major ATS
+	// domains, finding jobs from companies we've never explicitly listed.
+	// No-op if SerperAPIKey secret is not set.
+	dorkCandidates, err := fetchGoogleDorkJobs(ctx)
+	if err != nil {
+		rlog.Error("google dork scan failed", "err", err)
+	}
+	for _, c := range dorkCandidates {
+		result.GoogleDorkChecked++
+		lead, err := processCandidate(ctx, c)
+		if err != nil {
+			rlog.Error("failed to process google dork candidate", "id", c.ExternalID, "err", err)
+			continue
+		}
+		if lead != nil {
+			result.NewLeads++
+			newLeads = append(newLeads, *lead)
+		}
+	}
+
 	rlog.Info("scan complete",
 		"reddit_checked", result.RedditPostsChecked,
 		"hn_checked", result.HNCommentsChecked,
@@ -260,6 +281,7 @@ func Scan(ctx context.Context) (*ScanResult, error) {
 		"lever_checked", result.LeverChecked,
 		"ashby_checked", result.AshbyChecked,
 		"workable_checked", result.WorkableChecked,
+		"google_dork_checked", result.GoogleDorkChecked,
 		"new_leads", result.NewLeads,
 	)
 

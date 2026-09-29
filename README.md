@@ -14,6 +14,7 @@ hand.
 | We Work Remotely | Public RSS feed, remote-programming category | Stable |
 | YC jobs | Best-effort HTML scrape of `ycombinator.com/jobs` | Fragile — no official API |
 | DevRel Jobs (devreljob.com) | Best-effort HTML scrape | Fragile — no official API |
+| Google Dork (Serper.dev) | `site:` queries across Ashby, Greenhouse, Lever, Workable, and more — finds jobs at any company on those platforms, not just ones you've listed | Stable (paid API; free tier = 2,500 searches/month) |
 
 Two sources were deliberately left out:
 
@@ -48,8 +49,16 @@ Two sources were deliberately left out:
    ```
    encore secret set ResendAPIKey
    ```
-3. Edit `notifyEmail` in `scanner/email.go` to your own address.
-4. From this directory:
+3. *(Optional)* Get a free Serper.dev API key at [serper.dev](https://serper.dev)
+   (free tier: 2,500 searches/month, no card needed) to enable Google Dork
+   scanning across all ATS platforms:
+   ```
+   encore secret set SerperAPIKey
+   ```
+   Without this key the Google Dork source is silently skipped — everything
+   else continues to work normally.
+4. Edit `notifyEmail` in `scanner/email.go` to your own address.
+5. From this directory:
    ```
    encore run
    ```
@@ -75,7 +84,8 @@ spammed on quiet runs.
 - `POST /scan` — trigger a scan manually (also runs on a 30-min cron).
 - `GET /leads?reviewed=false&source=devrel-jobs&limit=50` — list leads,
   newest first. `source` values: `reddit`, `hackernews`, `weworkremotely`,
-  `yc`, `devrel-jobs`. Both filters are optional.
+  `yc`, `devrel-jobs`, `greenhouse`, `lever`, `ashby`, `workable`,
+  `google-dork`. Both filters are optional.
 - `POST /leads/:id/review` — mark a lead as actioned.
 
 ## Customizing
