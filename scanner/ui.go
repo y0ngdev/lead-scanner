@@ -33,9 +33,9 @@ func getBundledUI() []byte {
 	return bundledUI
 }
 
-// ServeRoot serves the application management dashboard at the root URL.
+// ServeRoot serves the application management dashboard when no other API route matches (including the root URL /).
 //
-//encore:api public raw path=/
+//encore:api public raw path=/!fallback
 func ServeRoot(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)

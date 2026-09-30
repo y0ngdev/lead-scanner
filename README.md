@@ -103,7 +103,7 @@ When you run `encore run`, a modern, responsive web application is automatically
 
 ### Applications Pipeline
 - `GET /applications` — list tracked applications (filters: `?status=interviewing`, `?search=stripe`).
-- `GET /applications/stats` — summary counts across pipeline stages, active count, and response rate.
+- `GET /application-stats` — summary counts across pipeline stages, active count, and response rate.
 - `POST /applications` — create a new application (optionally link `lead_id` to auto-mark lead reviewed).
 - `GET /applications/:id` — get application details.
 - `PATCH /applications/:id` — update status, salary, interview dates, or notes.

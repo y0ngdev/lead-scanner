@@ -176,7 +176,7 @@ func ListApplications(ctx context.Context, params *ListApplicationsParams) (*Lis
 
 // GetApplicationStats returns metrics on the application pipeline.
 //
-//encore:api public method=GET path=/applications/stats
+//encore:api public method=GET path=/application-stats
 func GetApplicationStats(ctx context.Context) (*ApplicationStats, error) {
 	rows, err := db.Query(ctx, `SELECT status, COUNT(*) FROM applications GROUP BY status`)
 	if err != nil {

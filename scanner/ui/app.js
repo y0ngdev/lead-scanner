@@ -93,7 +93,7 @@ function setViewMode(mode) {
 // Load Application Statistics
 async function loadStats() {
   try {
-    const stats = await apiFetch('/applications/stats');
+    const stats = await apiFetch('/application-stats');
     if (!stats) return;
 
     document.getElementById('stat-total').textContent = stats.total || 0;
