@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "encore-cloud": {
+      "type": "http",
+      "url": "https://api.encore.dev/mcp"
+    }
+  }
+}
