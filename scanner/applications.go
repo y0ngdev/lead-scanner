@@ -424,8 +424,7 @@ func UpdateApplication(ctx context.Context, id int64, p *UpdateApplicationParams
 		rlog.Error("failed updating application", "id", id, "err", err)
 		return nil, err
 	}
-	rowsAffected, _ := res.RowsAffected()
-	if rowsAffected == 0 {
+	if res.RowsAffected() == 0 {
 		return nil, fmt.Errorf("application not found with id %d", id)
 	}
 
