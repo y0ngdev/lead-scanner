@@ -40,11 +40,20 @@ async function apiFetch(endpoint, options = {}) {
       }
       throw new Error(message);
     }
+    const text = await res.text();
+    if (!text || text.trim() === '') {
+      return null;
+    }
     const contentType = res.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
-      return await res.json();
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        console.warn('Failed to parse JSON response:', text);
+        return null;
+      }
     }
-    return null;
+    return text;
   } catch (err) {
     console.error(`Request failed for ${url}:`, err);
     throw err;
@@ -395,7 +404,10 @@ async function loadLeads() {
   try {
     const res = await apiFetch(endpoint);
     leadsList = res?.leads || [];
-    document.getElementById('count-leads').textContent = leadsList.length;
+    const countEl = document.getElementById('count-leads');
+    if (countEl) {
+      countEl.textContent = res?.total !== undefined ? res.total : leadsList.length;
+    }
     renderLeads();
   } catch (err) {
     showToast(`Could not load leads: ${err.message}`, 'error');
@@ -428,10 +440,15 @@ function renderLeads() {
   container.innerHTML = filtered.map(lead => {
     const isApplied = lead.application_id && lead.application_id > 0;
     return `
-      <div class="lead-card">
+      <div class="lead-card ${lead.reviewed ? 'reviewed' : ''}" id="lead-card-${lead.id}">
         <div>
           <div class="lead-header">
             <h4 class="lead-title">${escapeHTML(lead.title)}</h4>
+            ${lead.reviewed ? `
+              <span class="status-badge reviewed" title="This lead has been reviewed">
+                ✓ Reviewed
+              </span>
+            ` : ''}
           </div>
 
           <div class="lead-badges" style="margin: 0.6rem 0;">
@@ -448,7 +465,7 @@ function renderLeads() {
 
         <div class="lead-footer">
           <span>Found ${formatRelative(lead.found_at)}</span>
-          <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
             <a href="${escapeHTML(lead.url)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
               View Post ↗
             </a>
@@ -461,11 +478,15 @@ function renderLeads() {
               </button>
             `}
 
-            ${!lead.reviewed ? `
-              <button class="btn btn-secondary btn-sm" onclick="markLeadReviewed(${lead.id})" title="Mark as reviewed">
-                ✓
+            ${lead.reviewed ? `
+              <button class="btn btn-secondary btn-sm" onclick="unmarkLeadReviewed(${lead.id})" title="Move back to unreviewed queue">
+                ↩ Unmark
               </button>
-            ` : ''}
+            ` : `
+              <button class="btn btn-secondary btn-sm" onclick="markLeadReviewed(${lead.id})" title="Mark as reviewed">
+                ✓ Mark Reviewed
+              </button>
+            `}
           </div>
         </div>
       </div>
@@ -537,12 +558,79 @@ function mapSourceToSelect(source) {
 
 // Mark a lead reviewed
 async function markLeadReviewed(id) {
+  const lead = leadsList.find(l => l.id === id);
+  const reviewFilter = document.getElementById('lead-review-filter')?.value || 'false';
+
+  // Optimistic UI update
+  if (reviewFilter === 'false') {
+    const cardEl = document.getElementById(`lead-card-${id}`);
+    if (cardEl) {
+      cardEl.style.transition = 'all 0.2s ease';
+      cardEl.style.opacity = '0';
+      cardEl.style.transform = 'scale(0.96)';
+      setTimeout(() => {
+        leadsList = leadsList.filter(l => l.id !== id);
+        renderLeads();
+      }, 200);
+    } else {
+      leadsList = leadsList.filter(l => l.id !== id);
+      renderLeads();
+    }
+  } else if (lead) {
+    lead.reviewed = true;
+    renderLeads();
+  }
+
+  const countEl = document.getElementById('count-leads');
+  if (countEl && parseInt(countEl.textContent, 10) > 0) {
+    countEl.textContent = Math.max(0, parseInt(countEl.textContent, 10) - 1);
+  }
+
   try {
     await apiFetch(`/leads/${id}/review`, { method: 'POST' });
     showToast('Lead marked as reviewed', 'success');
-    loadLeads();
   } catch (err) {
     showToast(`Error: ${err.message}`, 'error');
+    loadLeads();
+  }
+}
+
+// Unmark a lead as reviewed
+async function unmarkLeadReviewed(id) {
+  const lead = leadsList.find(l => l.id === id);
+  const reviewFilter = document.getElementById('lead-review-filter')?.value || 'false';
+
+  // Optimistic UI update
+  if (reviewFilter === 'true') {
+    const cardEl = document.getElementById(`lead-card-${id}`);
+    if (cardEl) {
+      cardEl.style.transition = 'all 0.2s ease';
+      cardEl.style.opacity = '0';
+      cardEl.style.transform = 'scale(0.96)';
+      setTimeout(() => {
+        leadsList = leadsList.filter(l => l.id !== id);
+        renderLeads();
+      }, 200);
+    } else {
+      leadsList = leadsList.filter(l => l.id !== id);
+      renderLeads();
+    }
+  } else if (lead) {
+    lead.reviewed = false;
+    renderLeads();
+  }
+
+  const countEl = document.getElementById('count-leads');
+  if (countEl && !isNaN(parseInt(countEl.textContent, 10))) {
+    countEl.textContent = parseInt(countEl.textContent, 10) + 1;
+  }
+
+  try {
+    await apiFetch(`/leads/${id}/unreview`, { method: 'POST' });
+    showToast('Lead unmarked as reviewed', 'success');
+  } catch (err) {
+    showToast(`Error: ${err.message}`, 'error');
+    loadLeads();
   }
 }
 

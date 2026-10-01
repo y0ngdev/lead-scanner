@@ -620,6 +620,7 @@ body {
 .status-badge.offer { background: var(--status-offer-bg); color: var(--status-offer); }
 .status-badge.rejected { background: var(--status-rejected-bg); color: var(--status-rejected); }
 .status-badge.withdrawn { background: var(--status-withdrawn-bg); color: var(--status-withdrawn); }
+.status-badge.reviewed { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); border: 1px solid rgba(16, 185, 129, 0.3); }
 
 /* Table View */
 .table-container {
@@ -681,6 +682,11 @@ body {
   border-color: var(--border-hover);
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
+}
+
+.lead-card.reviewed {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.03) 0%, var(--bg-card) 100%);
 }
 
 .lead-header {

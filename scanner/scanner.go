@@ -356,6 +356,7 @@ type ListLeadsParams struct {
 // ListLeadsResponse wraps the returned leads.
 type ListLeadsResponse struct {
 	Leads []Lead `json:"leads"`
+	Total int    `json:"total"`
 }
 
 // ListLeads returns leads, newest first. Filter with ?reviewed=false to see
@@ -417,14 +418,56 @@ func ListLeads(ctx context.Context, params *ListLeadsParams) (*ListLeadsResponse
 		}
 		leads = append(leads, l)
 	}
-	return &ListLeadsResponse{Leads: leads}, nil
+
+	// Count total leads matching criteria
+	countQuery := `SELECT COUNT(*) FROM leads l WHERE 1=1`
+	countArgs := []any{}
+	countArgN := 1
+	if params.Source != "" {
+		countQuery += " AND l.source = $" + strconv.Itoa(countArgN)
+		countArgs = append(countArgs, params.Source)
+		countArgN++
+	}
+	if params.Reviewed != "" {
+		reviewed, err := strconv.ParseBool(params.Reviewed)
+		if err == nil {
+			countQuery += " AND l.reviewed = $" + strconv.Itoa(countArgN)
+			countArgs = append(countArgs, reviewed)
+			countArgN++
+		}
+	}
+	var total int
+	if err := db.QueryRow(ctx, countQuery, countArgs...).Scan(&total); err != nil {
+		total = len(leads)
+	}
+
+	return &ListLeadsResponse{Leads: leads, Total: total}, nil
+}
+
+// ReviewLeadResponse indicates the result of updating a lead's reviewed status.
+type ReviewLeadResponse struct {
+	Success bool `json:"success"`
 }
 
 // MarkReviewed flags a lead as actioned so it stops showing up in your
 // default queue.
 //
 //encore:api public method=POST path=/leads/:id/review
-func MarkReviewed(ctx context.Context, id int64) error {
+func MarkReviewed(ctx context.Context, id int64) (*ReviewLeadResponse, error) {
 	_, err := db.Exec(ctx, `UPDATE leads SET reviewed = true WHERE id = $1`, id)
-	return err
+	if err != nil {
+		return nil, err
+	}
+	return &ReviewLeadResponse{Success: true}, nil
+}
+
+// UnmarkReviewed unflags a lead so it reappears in your default queue.
+//
+//encore:api public method=POST path=/leads/:id/unreview
+func UnmarkReviewed(ctx context.Context, id int64) (*ReviewLeadResponse, error) {
+	_, err := db.Exec(ctx, `UPDATE leads SET reviewed = false WHERE id = $1`, id)
+	if err != nil {
+		return nil, err
+	}
+	return &ReviewLeadResponse{Success: true}, nil
 }
