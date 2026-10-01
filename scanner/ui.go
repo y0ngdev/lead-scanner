@@ -33,27 +33,29 @@ func getBundledUI() []byte {
 	return bundledUI
 }
 
+func writeDashboardResponse(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(getBundledUI())
+}
+
 // ServeRoot serves the application management dashboard when no other API route matches (including the root URL /).
 //
 //encore:api public raw path=/!fallback
 func ServeRoot(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(getBundledUI())
+	writeDashboardResponse(w)
 }
 
 // ServeUIExact serves the application management dashboard at /ui.
 //
 //encore:api public raw path=/ui
 func ServeUIExact(w http.ResponseWriter, req *http.Request) {
-	ServeRoot(w, req)
+	writeDashboardResponse(w)
 }
 
 // ServeUI serves the application management dashboard at /ui/*path.
 //
 //encore:api public raw path=/ui/*path
 func ServeUI(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(getBundledUI())
+	writeDashboardResponse(w)
 }
