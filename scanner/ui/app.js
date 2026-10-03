@@ -60,17 +60,32 @@ async function apiFetch(endpoint, options = {}) {
   }
 }
 
+// Helper to refresh Lucide icons whenever HTML changes
+function refreshIcons() {
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+}
+
 // Navigation & Tab Switching
 function switchTab(tab) {
   currentTab = tab;
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(btn => {
+    btn.classList.remove('active', 'text-foreground');
+    btn.classList.add('text-muted-foreground');
+  });
   document.querySelectorAll('.view-panel').forEach(p => p.style.display = 'none');
 
   const tabBtn = document.getElementById(`tab-${tab}`);
-  if (tabBtn) tabBtn.classList.add('active');
+  if (tabBtn) {
+    tabBtn.classList.add('active', 'text-foreground');
+    tabBtn.classList.remove('text-muted-foreground');
+  }
 
   const panel = document.getElementById(`view-${tab}`);
-  if (panel) panel.style.display = 'block';
+  if (panel) {
+    panel.style.display = 'flex';
+  }
 
   if (tab === 'applications') {
     loadApplications();
@@ -81,12 +96,26 @@ function switchTab(tab) {
     loadStats();
     renderAnalytics();
   }
+
+  refreshIcons();
 }
 
 function setViewMode(mode) {
   currentViewMode = mode;
-  document.querySelectorAll('.view-mode-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(`mode-${mode}`).classList.add('active');
+  const kanbanBtn = document.getElementById('mode-kanban');
+  const tableBtn = document.getElementById('mode-table');
+  
+  if (kanbanBtn && tableBtn) {
+    [kanbanBtn, tableBtn].forEach(b => {
+      b.classList.remove('active', 'bg-background', 'text-foreground', 'shadow-xs');
+      b.classList.add('text-muted-foreground');
+    });
+    const activeBtn = document.getElementById(`mode-${mode}`);
+    if (activeBtn) {
+      activeBtn.classList.add('active', 'bg-background', 'text-foreground', 'shadow-xs');
+      activeBtn.classList.remove('text-muted-foreground');
+    }
+  }
 
   if (mode === 'kanban') {
     document.getElementById('kanban-view').style.display = 'grid';
@@ -185,8 +214,8 @@ function renderKanban() {
 
     if (grouped[col].length === 0) {
       container.innerHTML = `
-        <div class="empty-state" style="padding: 1.5rem 0.5rem;">
-          <div style="font-size: 0.78rem; color: var(--text-dim);">No applications</div>
+        <div class="flex flex-col items-center justify-center p-6 text-center text-muted-foreground/60 border border-dashed border-border/80 rounded-lg">
+          <span class="text-xs">No applications</span>
         </div>
       `;
       return;
@@ -194,57 +223,66 @@ function renderKanban() {
 
     container.innerHTML = grouped[col].map(app => createAppCardHTML(app)).join('');
   });
+
+  refreshIcons();
 }
 
 function createAppCardHTML(app) {
   const nextStepHTML = app.next_step ? `
-    <div class="tag tag-next" title="Next step">
-      <span>⏳ ${escapeHTML(app.next_step)}</span>
-      ${app.next_step_date ? `<strong>${formatDateBadge(app.next_step_date)}</strong>` : ''}
+    <div class="tag-pill text-amber-300 border-amber-500/20 bg-amber-500/10" title="Next step">
+      <i data-lucide="clock" class="w-3 h-3 text-amber-400"></i>
+      <span class="truncate max-w-[120px]">${escapeHTML(app.next_step)}</span>
+      ${app.next_step_date ? `<strong class="text-[10px] opacity-80">${formatDateBadge(app.next_step_date)}</strong>` : ''}
     </div>
   ` : '';
 
   const salaryHTML = app.salary ? `
-    <span class="tag tag-salary" title="Salary / Compensation">💰 ${escapeHTML(app.salary)}</span>
+    <span class="tag-pill text-emerald-300 border-emerald-500/20 bg-emerald-500/10" title="Salary / Compensation">
+      <i data-lucide="dollar-sign" class="w-3 h-3 text-emerald-400"></i>
+      <span>${escapeHTML(app.salary)}</span>
+    </span>
   ` : '';
 
   const locationHTML = app.location ? `
-    <span class="tag tag-location" title="Location">📍 ${escapeHTML(app.location)}</span>
+    <span class="tag-pill" title="Location">
+      <i data-lucide="map-pin" class="w-3 h-3 text-muted-foreground"></i>
+      <span class="truncate max-w-[90px]">${escapeHTML(app.location)}</span>
+    </span>
   ` : '';
 
-  const appliedDateStr = app.applied_date ? `Applied ${formatRelative(app.applied_date)}` : 'Draft';
+  const appliedDateStr = app.applied_date ? `${formatRelative(app.applied_date)}` : 'Draft';
 
   return `
     <div class="app-card" id="card-${app.id}" draggable="true" ondragstart="handleDragStart(event, ${app.id})" ondragend="handleDragEnd(event)">
-      <div class="app-card-header">
-        <div class="app-company">${escapeHTML(app.company)}</div>
-        <div class="app-card-actions">
+      <div class="flex items-start justify-between gap-2">
+        <div class="font-semibold text-xs text-foreground tracking-tight truncate">${escapeHTML(app.company)}</div>
+        <div class="flex items-center gap-1 shrink-0">
           ${app.job_url ? `
-            <a href="${escapeHTML(app.job_url)}" target="_blank" rel="noopener noreferrer" class="icon-btn" title="Open Job Posting">
-              ↗
+            <a href="${escapeHTML(app.job_url)}" target="_blank" rel="noopener noreferrer" class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors" title="Open Job Posting">
+              <i data-lucide="external-link" class="w-3 h-3"></i>
             </a>
           ` : ''}
-          <button class="icon-btn" onclick="openEditApplicationModal(${app.id})" title="Edit Application">
-            ✎
+          <button type="button" class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors" onclick="openEditApplicationModal(${app.id})" title="Edit Application">
+            <i data-lucide="edit-3" class="w-3 h-3"></i>
           </button>
-          <button class="icon-btn icon-btn-danger" onclick="confirmDeleteApplication(${app.id})" title="Delete Application">
-            ✕
+          <button type="button" class="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" onclick="confirmDeleteApplication(${app.id})" title="Delete Application">
+            <i data-lucide="trash-2" class="w-3 h-3"></i>
           </button>
         </div>
       </div>
 
-      <div class="app-role">${escapeHTML(app.role)}</div>
+      <div class="text-xs font-medium text-muted-foreground line-clamp-1">${escapeHTML(app.role)}</div>
 
-      <div class="app-meta-tags">
-        <span class="tag tag-source">${escapeHTML(app.source || 'manual')}</span>
+      <div class="flex flex-wrap gap-1.5 items-center">
+        <span class="tag-pill font-mono uppercase text-[9px] tracking-wider">${escapeHTML(app.source || 'manual')}</span>
         ${salaryHTML}
         ${locationHTML}
         ${nextStepHTML}
       </div>
 
-      <div class="app-card-footer">
+      <div class="flex items-center justify-between pt-2 border-t border-border/50 text-[11px] text-muted-foreground">
         <span>${appliedDateStr}</span>
-        <select class="select-filter btn-sm" style="padding: 0.15rem 0.4rem; font-size: 0.72rem; background: var(--bg-tertiary);" onchange="quickUpdateStatus(${app.id}, this.value)">
+        <select class="input h-6 text-[11px] py-0 px-2 max-w-[105px] bg-muted/60 border-border" onchange="quickUpdateStatus(${app.id}, this.value)">
           <option value="wishlist" ${app.status === 'wishlist' ? 'selected' : ''}>Wishlist</option>
           <option value="applied" ${app.status === 'applied' ? 'selected' : ''}>Applied</option>
           <option value="screening" ${app.status === 'screening' ? 'selected' : ''}>Screening</option>
@@ -262,95 +300,120 @@ function renderTable() {
   const tbody = document.getElementById('applications-table-body');
   if (!tbody) return;
 
-  if (applicationsList.length === 0) {
+  const searchQuery = (document.getElementById('app-search')?.value || '').toLowerCase();
+  const statusFilter = document.getElementById('app-status-filter')?.value || 'all';
+
+  const filtered = applicationsList.filter(app => {
+    if (statusFilter !== 'all' && app.status !== statusFilter) return false;
+    if (searchQuery) {
+      const match = (app.company || '').toLowerCase().includes(searchQuery) ||
+                    (app.role || '').toLowerCase().includes(searchQuery) ||
+                    (app.notes || '').toLowerCase().includes(searchQuery);
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7">
-          <div class="empty-state">
-            <div class="empty-state-icon">📋</div>
-            <h4>No applications tracked yet</h4>
-            <p>Click "+ Add Application" or convert leads from the Leads Queue.</p>
+        <td colspan="7" class="py-12 text-center text-muted-foreground">
+          <div class="flex flex-col items-center justify-center gap-2">
+            <i data-lucide="inbox" class="w-8 h-8 opacity-40"></i>
+            <span class="text-xs">No applications match your filter criteria.</span>
           </div>
         </td>
       </tr>
     `;
+    refreshIcons();
     return;
   }
 
-  tbody.innerHTML = applicationsList.map(app => {
-    return `
-      <tr>
-        <td>
-          <div style="font-weight: 700;">${escapeHTML(app.company)}</div>
-          <div style="color: var(--text-muted); font-size: 0.8rem;">${escapeHTML(app.role)}</div>
-        </td>
-        <td>
-          <span class="status-badge ${app.status}">${escapeHTML(app.status)}</span>
-        </td>
-        <td>
-          <span class="tag tag-source">${escapeHTML(app.source || 'manual')}</span>
-        </td>
-        <td>${app.applied_date || '<span style="color: var(--text-dim);">-</span>'}</td>
-        <td>
-          <div>${app.salary ? escapeHTML(app.salary) : ''}</div>
-          <div style="color: var(--text-dim); font-size: 0.75rem;">${app.location ? escapeHTML(app.location) : ''}</div>
-        </td>
-        <td>
-          <div style="font-size: 0.82rem;">${app.next_step ? escapeHTML(app.next_step) : '<span style="color: var(--text-dim);">-</span>'}</div>
-          ${app.next_step_date ? `<div style="font-size: 0.72rem; color: var(--accent-amber);">📅 ${app.next_step_date}</div>` : ''}
-        </td>
-        <td style="text-align: right;">
-          <div style="display: inline-flex; gap: 0.35rem;">
-            ${app.job_url ? `
-              <a href="${escapeHTML(app.job_url)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="View Job">
-                ↗
-              </a>
-            ` : ''}
-            <button class="btn btn-secondary btn-sm" onclick="openEditApplicationModal(${app.id})">Edit</button>
-            <button class="btn btn-secondary btn-sm icon-btn-danger" onclick="confirmDeleteApplication(${app.id})">✕</button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
+  tbody.innerHTML = filtered.map(app => `
+    <tr class="hover:bg-muted/30 transition-colors">
+      <td class="py-3 px-4">
+        <div class="font-semibold text-foreground">${escapeHTML(app.company)}</div>
+        <div class="text-muted-foreground text-[11px]">${escapeHTML(app.role)}</div>
+      </td>
+      <td class="py-3 px-4">
+        <span class="status-pill ${app.status}">${escapeHTML(app.status)}</span>
+      </td>
+      <td class="py-3 px-4 text-muted-foreground">
+        <span class="tag-pill font-mono uppercase text-[9px]">${escapeHTML(app.source || 'manual')}</span>
+      </td>
+      <td class="py-3 px-4 text-muted-foreground">
+        ${app.applied_date ? app.applied_date : '<span class="opacity-40">—</span>'}
+      </td>
+      <td class="py-3 px-4 text-muted-foreground">
+        <div>${app.salary ? `💰 ${escapeHTML(app.salary)}` : ''}</div>
+        <div class="text-[11px] opacity-75">${app.location ? `📍 ${escapeHTML(app.location)}` : '—'}</div>
+      </td>
+      <td class="py-3 px-4">
+        ${app.next_step ? `
+          <div class="text-foreground text-[11px] font-medium">${escapeHTML(app.next_step)}</div>
+          ${app.next_step_date ? `<div class="text-amber-400 text-[10px]">📅 ${app.next_step_date}</div>` : ''}
+        ` : '<span class="text-muted-foreground opacity-40">—</span>'}
+      </td>
+      <td class="py-3 px-4 text-right">
+        <div class="flex items-center justify-end gap-1">
+          ${app.job_url ? `
+            <a href="${escapeHTML(app.job_url)}" target="_blank" rel="noopener noreferrer" class="btn" data-variant="ghost" data-size="icon" title="Open Job Posting">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            </a>
+          ` : ''}
+          <button type="button" class="btn" data-variant="ghost" data-size="icon" onclick="openEditApplicationModal(${app.id})" title="Edit">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+          </button>
+          <button type="button" class="btn text-destructive hover:bg-destructive/10" data-variant="ghost" data-size="icon" onclick="confirmDeleteApplication(${app.id})" title="Delete">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  refreshIcons();
 }
 
-// Drag & Drop Handlers
+// Drag & Drop Handlers for Kanban
 function handleDragStart(e, id) {
   draggedAppId = id;
+  e.dataTransfer.setData('text/plain', String(id));
   e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', id);
-  setTimeout(() => {
-    const el = document.getElementById(`card-${id}`);
-    if (el) el.classList.add('is-dragging');
-  }, 0);
+  const card = document.getElementById(`card-${id}`);
+  if (card) card.classList.add('dragging');
 }
 
 function handleDragEnd(e) {
-  const el = document.getElementById(`card-${draggedAppId}`);
-  if (el) el.classList.remove('is-dragging');
-  document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over'));
+  if (draggedAppId) {
+    const card = document.getElementById(`card-${draggedAppId}`);
+    if (card) card.classList.remove('dragging');
+  }
+  document.querySelectorAll('.kanban-col').forEach(col => col.classList.remove('drag-over'));
   draggedAppId = null;
 }
 
 function handleDragOver(e) {
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
-  const column = e.currentTarget;
-  if (!column.classList.contains('drag-over')) {
-    column.classList.add('drag-over');
+  const col = e.currentTarget;
+  if (!col.classList.contains('drag-over')) {
+    col.classList.add('drag-over');
   }
 }
 
 function handleDragLeave(e) {
-  e.currentTarget.classList.remove('drag-over');
+  const col = e.currentTarget;
+  col.classList.remove('drag-over');
 }
 
 async function handleDrop(e, targetStatus) {
   e.preventDefault();
-  e.currentTarget.classList.remove('drag-over');
-  const idStr = e.dataTransfer.getData('text/plain') || draggedAppId;
-  const id = parseInt(idStr, 10);
+  const col = e.currentTarget;
+  col.classList.remove('drag-over');
+
+  const appIdStr = e.dataTransfer.getData('text/plain') || String(draggedAppId);
+  const id = parseInt(appIdStr, 10);
   if (!id) return;
 
   const app = applicationsList.find(a => a.id === id);
@@ -368,15 +431,17 @@ async function handleDrop(e, targetStatus) {
     showToast(`Moved to ${targetStatus}`, 'success');
     loadStats();
   } catch (err) {
-    showToast(`Failed to update status: ${err.message}`, 'error');
+    showToast(`Failed to move: ${err.message}`, 'error');
     loadApplications();
   }
 }
 
-// Quick status change from card dropdown
+// Quick Status Update via Select
 async function quickUpdateStatus(id, newStatus) {
   const app = applicationsList.find(a => a.id === id);
-  if (app) app.status = newStatus;
+  if (!app) return;
+
+  app.status = newStatus;
   renderKanban();
 
   try {
@@ -384,7 +449,7 @@ async function quickUpdateStatus(id, newStatus) {
       method: 'PATCH',
       body: JSON.stringify({ status: newStatus })
     });
-    showToast(`Updated status to ${newStatus}`, 'success');
+    showToast(`Updated to ${newStatus}`, 'success');
     loadStats();
   } catch (err) {
     showToast(`Failed to update status: ${err.message}`, 'error');
@@ -428,12 +493,15 @@ function renderLeads() {
 
   if (filtered.length === 0) {
     container.innerHTML = `
-      <div class="empty-state" style="grid-column: 1 / -1;">
-        <div class="empty-state-icon">🎯</div>
-        <h4>No matching leads found</h4>
-        <p>Click "Run Scan" in the header to search job boards and Google Dork for new postings.</p>
+      <div class="col-span-full py-16 flex flex-col items-center justify-center text-center p-6 border border-dashed border-border rounded-xl bg-card/40">
+        <div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-3">
+          <i data-lucide="sparkles" class="w-6 h-6"></i>
+        </div>
+        <h4 class="text-sm font-semibold text-foreground">No matching leads found</h4>
+        <p class="text-xs text-muted-foreground mt-1 max-w-sm">Click "Run Scan" in the header to search job boards and Google Dork for new tech postings.</p>
       </div>
     `;
+    refreshIcons();
     return;
   }
 
@@ -441,50 +509,58 @@ function renderLeads() {
     const isApplied = lead.application_id && lead.application_id > 0;
     return `
       <div class="lead-card ${lead.reviewed ? 'reviewed' : ''}" id="lead-card-${lead.id}">
-        <div>
-          <div class="lead-header">
-            <h4 class="lead-title">${escapeHTML(lead.title)}</h4>
+        <div class="flex flex-col gap-2.5">
+          <div class="flex items-start justify-between gap-3">
+            <h4 class="text-xs font-semibold text-foreground leading-snug line-clamp-2">${escapeHTML(lead.title)}</h4>
             ${lead.reviewed ? `
-              <span class="status-badge reviewed" title="This lead has been reviewed">
-                ✓ Reviewed
+              <span class="status-pill reviewed shrink-0" title="This lead has been reviewed">
+                <i data-lucide="check" class="w-3 h-3"></i>
+                <span>Reviewed</span>
               </span>
             ` : ''}
           </div>
 
-          <div class="lead-badges" style="margin: 0.6rem 0;">
-            <span class="tag tag-source">${escapeHTML(lead.source)}</span>
-            <span class="tag tag-salary">🔑 ${escapeHTML(lead.matched_keyword)}</span>
-            ${lead.subreddit ? `<span class="tag tag-location">r/${escapeHTML(lead.subreddit)}</span>` : ''}
-            ${lead.author ? `<span class="tag tag-source">👤 ${escapeHTML(lead.author)}</span>` : ''}
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="tag-pill font-mono uppercase text-[9px] text-primary bg-primary/10 border-primary/20">${escapeHTML(lead.source)}</span>
+            <span class="tag-pill text-amber-300 border-amber-500/20 bg-amber-500/10">
+              <i data-lucide="key" class="w-2.5 h-2.5 text-amber-400"></i>
+              <span>${escapeHTML(lead.matched_keyword)}</span>
+            </span>
+            ${lead.subreddit ? `<span class="tag-pill text-indigo-300">r/${escapeHTML(lead.subreddit)}</span>` : ''}
+            ${lead.author ? `<span class="tag-pill text-muted-foreground">👤 ${escapeHTML(lead.author)}</span>` : ''}
           </div>
 
           ${lead.body ? `
-            <div class="lead-body-snippet">${escapeHTML(lead.body.slice(0, 320))}${lead.body.length > 320 ? '...' : ''}</div>
+            <div class="lead-snippet">${escapeHTML(lead.body.slice(0, 320))}${lead.body.length > 320 ? '...' : ''}</div>
           ` : ''}
         </div>
 
-        <div class="lead-footer">
+        <div class="flex items-center justify-between pt-3 border-t border-border/50 text-[11px] text-muted-foreground gap-2">
           <span>Found ${formatRelative(lead.found_at)}</span>
-          <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-            <a href="${escapeHTML(lead.url)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
-              View Post ↗
+          <div class="flex items-center gap-1.5 flex-wrap justify-end">
+            <a href="${escapeHTML(lead.url)}" target="_blank" rel="noopener noreferrer" class="btn" data-variant="outline" data-size="sm">
+              <span>View Post</span>
+              <i data-lucide="external-link" class="w-3 h-3"></i>
             </a>
 
             ${isApplied ? `
-              <span class="status-badge applied">✓ Applied</span>
+              <span class="status-pill applied">✓ Applied</span>
             ` : `
-              <button class="btn btn-primary btn-sm" onclick="openConvertModal(${lead.id})">
-                + Track / Apply
+              <button type="button" class="btn" data-variant="default" data-size="sm" onclick="openConvertModal(${lead.id})">
+                <i data-lucide="plus" class="w-3 h-3"></i>
+                <span>Track</span>
               </button>
             `}
 
             ${lead.reviewed ? `
-              <button class="btn btn-secondary btn-sm" onclick="unmarkLeadReviewed(${lead.id})" title="Move back to unreviewed queue">
-                ↩ Unmark
+              <button type="button" class="btn" data-variant="secondary" data-size="sm" onclick="unmarkLeadReviewed(${lead.id})" title="Move back to unreviewed queue">
+                <i data-lucide="undo-2" class="w-3 h-3"></i>
+                <span>Unmark</span>
               </button>
             ` : `
-              <button class="btn btn-secondary btn-sm" onclick="markLeadReviewed(${lead.id})" title="Mark as reviewed">
-                ✓ Mark Reviewed
+              <button type="button" class="btn" data-variant="secondary" data-size="sm" onclick="markLeadReviewed(${lead.id})" title="Mark as reviewed">
+                <i data-lucide="check" class="w-3 h-3 text-emerald-400"></i>
+                <span>Reviewed</span>
               </button>
             `}
           </div>
@@ -492,6 +568,8 @@ function renderLeads() {
       </div>
     `;
   }).join('');
+
+  refreshIcons();
 }
 
 // Convert a Lead into an Application Modal
@@ -641,8 +719,9 @@ async function triggerScan() {
   const text = document.getElementById('scan-text');
 
   btn.disabled = true;
-  icon.innerHTML = '<span class="spinner"></span>';
+  icon.innerHTML = '<i data-lucide="refresh-cw" class="w-3.5 h-3.5 animate-spin-icon"></i>';
   text.textContent = 'Scanning...';
+  refreshIcons();
 
   try {
     const res = await apiFetch('/scan', { method: 'POST' });
@@ -654,18 +733,26 @@ async function triggerScan() {
     showToast(`Scan failed: ${err.message}`, 'error');
   } finally {
     btn.disabled = false;
-    icon.innerHTML = '⚡';
+    icon.innerHTML = '<i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>';
     text.textContent = 'Run Scan';
+    refreshIcons();
   }
 }
 
 // Modal Handlers
 function openApplicationModal() {
-  document.getElementById('application-modal').classList.add('active');
+  const modal = document.getElementById('application-modal');
+  if (modal) {
+    modal.style.display = 'flex';
+    refreshIcons();
+  }
 }
 
 function closeApplicationModal() {
-  document.getElementById('application-modal').classList.remove('active');
+  const modal = document.getElementById('application-modal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
 }
 
 function openAddApplicationModal() {
@@ -760,7 +847,7 @@ async function handleSaveApplication(e) {
         method: 'POST',
         body: JSON.stringify(payload)
       });
-      showToast(`Application tracked for ${company}!`, 'success');
+      showToast(`Added ${company} application!`, 'success');
     }
 
     closeApplicationModal();
@@ -768,7 +855,7 @@ async function handleSaveApplication(e) {
     loadStats();
     if (currentTab === 'leads') loadLeads();
   } catch (err) {
-    showToast(`Error saving application: ${err.message}`, 'error');
+    showToast(`Error saving: ${err.message}`, 'error');
   } finally {
     saveBtn.disabled = false;
     saveBtn.textContent = 'Save Application';
@@ -783,7 +870,7 @@ async function confirmDeleteApplication(id) {
 
   try {
     await apiFetch(`/applications/${id}`, { method: 'DELETE' });
-    showToast('Application deleted', 'info');
+    showToast('Application deleted', 'success');
     loadApplications();
     loadStats();
   } catch (err) {
@@ -799,24 +886,24 @@ function renderAnalytics() {
 
   const total = applicationsList.length || 1;
   const stages = [
-    { label: 'Wishlist', key: 'wishlist', color: 'var(--status-wishlist)' },
-    { label: 'Applied', key: 'applied', color: 'var(--status-applied)' },
-    { label: 'Screening', key: 'screening', color: 'var(--status-screening)' },
-    { label: 'Interviewing', key: 'interviewing', color: 'var(--status-interviewing)' },
-    { label: 'Offer', key: 'offer', color: 'var(--status-offer)' }
+    { label: 'Wishlist', key: 'wishlist', color: '#fbbf24' },
+    { label: 'Applied', key: 'applied', color: '#60a5fa' },
+    { label: 'Screening', key: 'screening', color: '#22d3ee' },
+    { label: 'Interviewing', key: 'interviewing', color: '#c084fc' },
+    { label: 'Offer', key: 'offer', color: '#34d399' }
   ];
 
   funnelContainer.innerHTML = stages.map(s => {
     const count = applicationsList.filter(a => a.status === s.key).length;
     const pct = Math.round((count / total) * 100);
     return `
-      <div>
-        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.25rem;">
-          <span style="font-weight: 600;">${s.label}</span>
-          <span style="color: var(--text-muted);">${count} (${pct}%)</span>
+      <div class="flex flex-col gap-1.5">
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-medium text-foreground">${s.label}</span>
+          <span class="text-muted-foreground font-mono">${count} (${pct}%)</span>
         </div>
-        <div style="height: 10px; background: var(--bg-tertiary); border-radius: var(--radius-full); overflow: hidden;">
-          <div style="width: ${Math.max(pct, 2)}%; height: 100%; background: ${s.color}; border-radius: var(--radius-full);"></div>
+        <div class="h-2 w-full bg-muted/60 rounded-full overflow-hidden">
+          <div style="width: ${Math.max(pct, 2)}%; background-color: ${s.color};" class="h-full rounded-full transition-all duration-300"></div>
         </div>
       </div>
     `;
@@ -826,23 +913,28 @@ function renderAnalytics() {
   const reminders = applicationsList.filter(a => a.next_step && a.status !== 'rejected' && a.status !== 'withdrawn');
   if (reminders.length === 0) {
     remindersContainer.innerHTML = `
-      <div class="empty-state" style="padding: 1.5rem 0.5rem;">
-        <div style="font-size: 0.85rem; color: var(--text-dim);">No upcoming next steps set</div>
+      <div class="p-6 text-center text-xs text-muted-foreground/70 border border-dashed border-border/80 rounded-lg">
+        No upcoming action items or interview milestones.
       </div>
     `;
   } else {
     remindersContainer.innerHTML = reminders.map(a => `
-      <div style="background: var(--bg-tertiary); padding: 0.75rem 1rem; border-radius: var(--radius-md); border-left: 3px solid var(--accent-amber);">
-        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700;">
-          <span>${escapeHTML(a.company)} — ${escapeHTML(a.role)}</span>
-          ${a.next_step_date ? `<span style="color: var(--accent-amber);">📅 ${a.next_step_date}</span>` : ''}
+      <div class="p-3 rounded-lg bg-card/60 border border-border flex items-start justify-between gap-3">
+        <div class="flex flex-col gap-1">
+          <div class="text-xs font-semibold text-foreground">${escapeHTML(a.company)} — <span class="text-muted-foreground font-normal">${escapeHTML(a.role)}</span></div>
+          <div class="text-xs text-muted-foreground">${escapeHTML(a.next_step)}</div>
         </div>
-        <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem;">
-          ${escapeHTML(a.next_step)}
-        </div>
+        ${a.next_step_date ? `
+          <span class="tag-pill text-amber-300 border-amber-500/20 bg-amber-500/10 shrink-0">
+            <i data-lucide="calendar" class="w-3 h-3 text-amber-400"></i>
+            <span>${a.next_step_date}</span>
+          </span>
+        ` : ''}
       </div>
     `).join('');
   }
+
+  refreshIcons();
 }
 
 // Search and Filter Handlers
@@ -862,18 +954,25 @@ function handleLeadSearch() {
 // Settings Modal
 function openSettingsModal() {
   document.getElementById('setting-api-url').value = getApiBase();
-  document.getElementById('settings-modal').classList.add('active');
+  const modal = document.getElementById('settings-modal');
+  if (modal) {
+    modal.style.display = 'flex';
+    refreshIcons();
+  }
 }
 
 function closeSettingsModal() {
-  document.getElementById('settings-modal').classList.remove('active');
+  const modal = document.getElementById('settings-modal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
 }
 
 function saveSettings() {
   const url = document.getElementById('setting-api-url').value.trim();
   localStorage.setItem('lead_scanner_api_url', url);
   closeSettingsModal();
-  showToast('Settings saved, reloading data...', 'info');
+  showToast('Settings saved, reconnecting...', 'info');
   loadApplications();
   loadStats();
 }
@@ -883,19 +982,24 @@ function showToast(message, type = 'info') {
   const container = document.getElementById('toast-container');
   if (!container) return;
 
+  const iconName = type === 'success' ? 'check-circle' : type === 'error' ? 'alert-triangle' : 'info';
+  const iconColor = type === 'success' ? 'text-emerald-400' : type === 'error' ? 'text-rose-400' : 'text-primary';
+
   const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
+  toast.className = `toast-msg ${type}`;
   toast.innerHTML = `
-    <span>${type === 'success' ? '✓' : type === 'error' ? '⚠️' : 'ℹ️'}</span>
-    <span>${escapeHTML(message)}</span>
+    <i data-lucide="${iconName}" class="w-4 h-4 ${iconColor} shrink-0"></i>
+    <span class="text-xs leading-normal">${escapeHTML(message)}</span>
   `;
 
   container.appendChild(toast);
+  refreshIcons();
+
   setTimeout(() => {
     toast.style.opacity = '0';
-    toast.style.transform = 'translateY(10px)';
-    toast.style.transition = 'all 0.3s ease';
-    setTimeout(() => toast.remove(), 300);
+    toast.style.transform = 'translateY(8px)';
+    toast.style.transition = 'all 0.25s ease';
+    setTimeout(() => toast.remove(), 250);
   }, 4000);
 }
 
@@ -936,4 +1040,5 @@ function formatRelative(dateVal) {
 document.addEventListener('DOMContentLoaded', () => {
   loadApplications();
   loadStats();
+  refreshIcons();
 });
