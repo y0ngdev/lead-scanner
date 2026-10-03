@@ -138,7 +138,7 @@ function setViewMode(mode) {
   }
 
   if (mode === 'kanban') {
-    document.getElementById('kanban-view').style.display = 'grid';
+    document.getElementById('kanban-view').style.display = 'block';
     document.getElementById('table-view').style.display = 'none';
     renderKanban();
   } else {
@@ -250,9 +250,9 @@ function renderKanban() {
 
     if (grouped[col].length === 0) {
       container.innerHTML = `
-        <div class="kanban-empty-dropzone" onclick="openAddApplicationModal('${col}')" title="Click to add application to ${col}">
-          <i data-lucide="plus" class="w-3.5 h-3.5 opacity-60"></i>
-          <span>Add ${col}</span>
+        <div class="k-empty" onclick="openAddApplicationModal('${col}')" role="button" tabindex="0" aria-label="Add application to ${col}">
+          <i data-lucide="plus" style="width:12px;height:12px;"></i>
+          Add here
         </div>
       `;
       return;
@@ -269,66 +269,61 @@ function createAppCardHTML(app) {
   const companyInitial = (app.company || '?').charAt(0).toUpperCase();
 
   const nextStepHTML = app.next_step ? `
-    <div class="tag-pill text-amber-300 border-amber-500/25 bg-amber-500/10" title="Next step">
-      <i data-lucide="clock" class="w-3 h-3 text-amber-400"></i>
-      <span class="truncate max-w-[110px]">${escapeHTML(app.next_step)}</span>
-      ${app.next_step_date ? `<strong class="text-[10px] opacity-80">${formatDateBadge(app.next_step_date)}</strong>` : ''}
-    </div>
+    <span class="tag amber" title="Next step">
+      <i data-lucide="clock" style="width:10px;height:10px;"></i>
+      <span class="truncate" style="max-width:100px">${escapeHTML(app.next_step)}</span>
+      ${app.next_step_date ? `<strong style="font-size:10px;opacity:0.8">${formatDateBadge(app.next_step_date)}</strong>` : ''}
+    </span>
   ` : '';
 
   const salaryHTML = app.salary ? `
-    <span class="tag-pill text-emerald-300 border-emerald-500/25 bg-emerald-500/10" title="Salary / Compensation">
-      <i data-lucide="dollar-sign" class="w-3 h-3 text-emerald-400"></i>
-      <span>${escapeHTML(app.salary)}</span>
+    <span class="tag green" title="Salary">
+      <i data-lucide="dollar-sign" style="width:10px;height:10px;"></i>
+      ${escapeHTML(app.salary)}
     </span>
   ` : '';
 
   const locationHTML = app.location ? `
-    <span class="tag-pill" title="Location">
-      <i data-lucide="map-pin" class="w-3 h-3 text-muted-foreground"></i>
-      <span class="truncate max-w-[90px]">${escapeHTML(app.location)}</span>
+    <span class="tag" title="Location">
+      <i data-lucide="map-pin" style="width:10px;height:10px;"></i>
+      <span class="truncate" style="max-width:80px">${escapeHTML(app.location)}</span>
     </span>
   ` : '';
 
-  const appliedDateStr = app.applied_date ? `${formatRelative(app.applied_date)}` : 'Draft';
+  const appliedDateStr = app.applied_date ? formatRelative(app.applied_date) : 'Draft';
 
   return `
-    <div class="app-card" id="card-${app.id}" draggable="true" ondragstart="handleDragStart(event, ${app.id})" ondragend="handleDragEnd(event)">
-      <div class="flex items-start justify-between gap-2">
-        <div class="flex items-center gap-2 min-w-0">
-          <div class="w-6 h-6 rounded bg-muted/90 border border-border text-foreground font-semibold text-[11px] flex items-center justify-center shrink-0">
-            ${companyInitial}
-          </div>
-          <div class="font-semibold text-xs text-foreground tracking-tight truncate">${escapeHTML(app.company)}</div>
+    <div class="app-card" id="card-${app.id}" draggable="true" ondragstart="handleDragStart(event, ${app.id})" ondragend="handleDragEnd(event)" role="listitem">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+        <div style="display:flex;align-items:center;gap:6px;min-width:0">
+          <div style="width:22px;height:22px;border-radius:4px;background:var(--b1);border:1px solid var(--b2);color:var(--t1);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">${companyInitial}</div>
+          <div class="app-company">${escapeHTML(app.company)}</div>
         </div>
-        
-        <div class="flex items-center gap-1 shrink-0">
+        <div style="display:flex;align-items:center;gap:2px;flex-shrink:0">
           ${app.job_url ? `
-            <a href="${escapeHTML(app.job_url)}" target="_blank" rel="noopener noreferrer" class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors" title="Open Job Posting" aria-label="Open Job Posting">
-              <i data-lucide="external-link" class="w-3 h-3"></i>
+            <a href="${escapeHTML(app.job_url)}" target="_blank" rel="noopener noreferrer" class="icon-btn" style="width:22px;height:22px" title="Open Job Posting" aria-label="Open Job Posting">
+              <i data-lucide="external-link" style="width:11px;height:11px;"></i>
             </a>
           ` : ''}
-          <button type="button" class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors" onclick="openEditApplicationModal(${app.id})" title="Edit Application" aria-label="Edit Application">
-            <i data-lucide="edit-3" class="w-3 h-3"></i>
+          <button type="button" class="icon-btn" style="width:22px;height:22px" onclick="openEditApplicationModal(${app.id})" title="Edit" aria-label="Edit Application">
+            <i data-lucide="edit-3" style="width:11px;height:11px;"></i>
           </button>
-          <button type="button" class="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" onclick="confirmDeleteApplication(${app.id})" title="Delete Application" aria-label="Delete Application">
-            <i data-lucide="trash-2" class="w-3 h-3"></i>
+          <button type="button" class="icon-btn" style="width:22px;height:22px;color:var(--red-text)" onclick="confirmDeleteApplication(${app.id})" title="Delete" aria-label="Delete Application">
+            <i data-lucide="trash-2" style="width:11px;height:11px;"></i>
           </button>
         </div>
       </div>
 
-      <div class="text-xs font-medium text-muted-foreground line-clamp-1">${escapeHTML(app.role)}</div>
+      <div class="app-role">${escapeHTML(app.role)}</div>
 
-      <div class="flex flex-wrap gap-1.5 items-center">
-        <span class="source-pill ${sourceClass}">${escapeHTML(app.source || 'manual')}</span>
-        ${salaryHTML}
-        ${locationHTML}
-        ${nextStepHTML}
+      <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">
+        <span class="src ${sourceClass}">${escapeHTML(app.source || 'manual')}</span>
+        ${salaryHTML}${locationHTML}${nextStepHTML}
       </div>
 
-      <div class="flex items-center justify-between pt-2 border-t border-border/50 text-[11px] text-muted-foreground">
-        <span>${appliedDateStr}</span>
-        <select class="input h-6 text-[11px] py-0 px-2 max-w-[105px] bg-muted/70 border-border" onchange="quickUpdateStatus(${app.id}, this.value)" aria-label="Update Stage">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:7px;border-top:1px solid var(--b0);gap:4px">
+        <span style="font-size:11px;color:var(--t2);font-variant-numeric:tabular-nums">${appliedDateStr}</span>
+        <select style="height:22px;padding:0 20px 0 6px;font-size:10.5px;background:var(--s1);border:1px solid var(--b1);border-radius:4px;color:var(--t1);cursor:pointer;appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.3)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 5px center;" onchange="quickUpdateStatus(${app.id}, this.value)" aria-label="Update Stage">
           <option value="wishlist" ${app.status === 'wishlist' ? 'selected' : ''}>Wishlist</option>
           <option value="applied" ${app.status === 'applied' ? 'selected' : ''}>Applied</option>
           <option value="screening" ${app.status === 'screening' ? 'selected' : ''}>Screening</option>
@@ -363,11 +358,8 @@ function renderTable() {
   if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" class="py-12 text-center text-muted-foreground">
-          <div class="flex flex-col items-center justify-center gap-2">
-            <i data-lucide="inbox" class="w-8 h-8 opacity-40"></i>
-            <span class="text-xs">No applications match your filter criteria.</span>
-          </div>
+        <td colspan="7" style="padding:40px;text-align:center;color:var(--t2);font-size:12.5px">
+          No applications match your filter criteria.
         </td>
       </tr>
     `;
@@ -378,42 +370,36 @@ function renderTable() {
   tbody.innerHTML = filtered.map(app => {
     const sourceClass = getSourceClass(app.source);
     return `
-      <tr class="hover:bg-muted/30 transition-colors">
-        <td class="py-3 px-4">
-          <div class="font-semibold text-foreground">${escapeHTML(app.company)}</div>
-          <div class="text-muted-foreground text-[11px]">${escapeHTML(app.role)}</div>
+      <tr>
+        <td class="td-primary">
+          <div>${escapeHTML(app.company)}</div>
+          <div style="font-size:11px;color:var(--t1);font-weight:400;margin-top:2px">${escapeHTML(app.role)}</div>
         </td>
-        <td class="py-3 px-4">
-          <span class="status-pill ${app.status}">${escapeHTML(app.status)}</span>
+        <td><span class="status ${app.status}">${escapeHTML(app.status)}</span></td>
+        <td><span class="src ${sourceClass}">${escapeHTML(app.source || 'manual')}</span></td>
+        <td style="font-variant-numeric:tabular-nums">${app.applied_date || '<span style="opacity:0.3">—</span>'}</td>
+        <td>
+          ${app.salary ? `<div style="font-size:12px">${escapeHTML(app.salary)}</div>` : ''}
+          ${app.location ? `<div style="font-size:11px;color:var(--t2);margin-top:2px">${escapeHTML(app.location)}</div>` : (!app.salary ? '<span style="opacity:0.3">—</span>' : '')}
         </td>
-        <td class="py-3 px-4">
-          <span class="source-pill ${sourceClass}">${escapeHTML(app.source || 'manual')}</span>
-        </td>
-        <td class="py-3 px-4 text-muted-foreground tabular-nums">
-          ${app.applied_date ? app.applied_date : '<span class="opacity-40">—</span>'}
-        </td>
-        <td class="py-3 px-4 text-muted-foreground">
-          <div>${app.salary ? `💰 ${escapeHTML(app.salary)}` : ''}</div>
-          <div class="text-[11px] opacity-75">${app.location ? `📍 ${escapeHTML(app.location)}` : '—'}</div>
-        </td>
-        <td class="py-3 px-4">
+        <td>
           ${app.next_step ? `
-            <div class="text-foreground text-[11px] font-medium">${escapeHTML(app.next_step)}</div>
-            ${app.next_step_date ? `<div class="text-amber-400 text-[10px] tabular-nums">📅 ${app.next_step_date}</div>` : ''}
-          ` : '<span class="text-muted-foreground opacity-40">—</span>'}
+            <div style="font-size:12px;color:var(--t0);font-weight:500">${escapeHTML(app.next_step)}</div>
+            ${app.next_step_date ? `<div style="font-size:11px;color:var(--amber-text);font-variant-numeric:tabular-nums;margin-top:2px">${app.next_step_date}</div>` : ''}
+          ` : '<span style="opacity:0.3">—</span>'}
         </td>
-        <td class="py-3 px-4 text-right">
-          <div class="flex items-center justify-end gap-1">
+        <td style="text-align:right">
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:3px">
             ${app.job_url ? `
-              <a href="${escapeHTML(app.job_url)}" target="_blank" rel="noopener noreferrer" class="btn" data-variant="ghost" data-size="icon" title="Open Job Posting" aria-label="Open Job Posting">
-                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              <a href="${escapeHTML(app.job_url)}" target="_blank" rel="noopener noreferrer" class="icon-btn" style="width:26px;height:26px" title="View posting" aria-label="View job posting">
+                <i data-lucide="external-link" style="width:12px;height:12px;"></i>
               </a>
             ` : ''}
-            <button type="button" class="btn" data-variant="ghost" data-size="icon" onclick="openEditApplicationModal(${app.id})" title="Edit" aria-label="Edit">
-              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+            <button type="button" class="icon-btn" style="width:26px;height:26px" onclick="openEditApplicationModal(${app.id})" title="Edit" aria-label="Edit">
+              <i data-lucide="edit-3" style="width:12px;height:12px;"></i>
             </button>
-            <button type="button" class="btn text-destructive hover:bg-destructive/10" data-variant="ghost" data-size="icon" onclick="confirmDeleteApplication(${app.id})" title="Delete" aria-label="Delete">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            <button type="button" class="icon-btn" style="width:26px;height:26px;color:var(--red-text)" onclick="confirmDeleteApplication(${app.id})" title="Delete" aria-label="Delete">
+              <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
             </button>
           </div>
         </td>
@@ -438,7 +424,7 @@ function handleDragEnd(e) {
     const card = document.getElementById(`card-${draggedAppId}`);
     if (card) card.classList.remove('dragging');
   }
-  document.querySelectorAll('.kanban-col').forEach(col => col.classList.remove('drag-over'));
+  document.querySelectorAll('.k-col').forEach(col => col.classList.remove('drag-over'));
   draggedAppId = null;
 }
 
@@ -540,12 +526,10 @@ async function loadLeads() {
 
 // Quick Source Filter handler from chips
 function setSourceFilter(source) {
-  document.querySelectorAll('#source-filter-chips .source-chip').forEach(btn => {
-    if (btn.getAttribute('data-source') === source) {
-      btn.classList.add('active');
-    } else {
-      btn.classList.remove('active');
-    }
+  document.querySelectorAll('.chips-row .chip').forEach(btn => {
+    const isMatch = btn.getAttribute('data-source') === source;
+    btn.classList.toggle('active', isMatch);
+    btn.setAttribute('aria-pressed', isMatch ? 'true' : 'false');
   });
 
   const select = document.getElementById('lead-source-filter');
@@ -570,15 +554,15 @@ function renderLeads() {
 
   if (filtered.length === 0) {
     container.innerHTML = `
-      <div class="col-span-full py-16 flex flex-col items-center justify-center text-center p-6 border border-dashed border-border rounded-xl bg-card/40">
-        <div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-3">
-          <i data-lucide="sparkles" class="w-6 h-6"></i>
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-state-icon">
+          <i data-lucide="inbox" style="width:20px;height:20px;"></i>
         </div>
-        <h4 class="text-sm font-semibold text-foreground">No matching leads found</h4>
-        <p class="text-xs text-muted-foreground mt-1 max-w-sm">Click "Run Scan" in the header to search job boards and Google Dork for new tech postings.</p>
-        <button type="button" class="btn mt-4" data-variant="outline" data-size="sm" onclick="triggerScan()">
-          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-          <span>Run Scan Now</span>
+        <h4>No leads found</h4>
+        <p>Run a scan to pull fresh job postings from Ashby, Greenhouse, Lever, YC and more.</p>
+        <button type="button" class="btn-outline btn-sm" onclick="triggerScan()" style="margin-top:8px">
+          <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i>
+          Run Scan
         </button>
       </div>
     `;
@@ -591,59 +575,44 @@ function renderLeads() {
     const sourceClass = getSourceClass(lead.source);
 
     return `
-      <div class="lead-card ${lead.reviewed ? 'reviewed' : ''}" id="lead-card-${lead.id}">
-        <div class="flex flex-col gap-2.5">
-          <div class="flex items-start justify-between gap-3">
-            <h4 class="text-xs font-semibold text-foreground leading-snug line-clamp-2">${escapeHTML(lead.title)}</h4>
-            ${lead.reviewed ? `
-              <span class="status-pill reviewed shrink-0" title="This lead has been reviewed">
-                <i data-lucide="check" class="w-3 h-3"></i>
-                <span>Reviewed</span>
-              </span>
-            ` : ''}
-          </div>
-
-          <div class="flex flex-wrap items-center gap-1.5">
-            <span class="source-pill ${sourceClass}">${escapeHTML(lead.source)}</span>
-            <span class="tag-pill text-amber-300 border-amber-500/20 bg-amber-500/10">
-              <i data-lucide="key" class="w-2.5 h-2.5 text-amber-400"></i>
-              <span>${escapeHTML(lead.matched_keyword)}</span>
-            </span>
-            ${lead.subreddit ? `<span class="tag-pill text-indigo-300">r/${escapeHTML(lead.subreddit)}</span>` : ''}
-            ${lead.author ? `<span class="tag-pill text-muted-foreground">👤 ${escapeHTML(lead.author)}</span>` : ''}
-          </div>
-
-          ${lead.body ? `
-            <div class="lead-snippet">${escapeHTML(lead.body.slice(0, 320))}${lead.body.length > 320 ? '...' : ''}</div>
-          ` : ''}
+      <div class="lead-card${lead.reviewed ? ' reviewed' : ''}" id="lead-card-${lead.id}" role="listitem">
+        <div class="lead-meta">
+          <span class="src ${sourceClass}">${escapeHTML(lead.source)}</span>
+          <span class="tag amber">
+            <i data-lucide="key" style="width:9px;height:9px;"></i>
+            ${escapeHTML(lead.matched_keyword)}
+          </span>
+          ${lead.subreddit ? `<span class="tag">r/${escapeHTML(lead.subreddit)}</span>` : ''}
+          ${lead.reviewed ? `<span class="status reviewed"><i data-lucide="check" style="width:10px;height:10px;"></i> Reviewed</span>` : ''}
         </div>
 
-        <div class="flex items-center justify-between pt-3 border-t border-border/50 text-[11px] text-muted-foreground gap-2">
-          <span class="tabular-nums">Found ${formatRelative(lead.found_at)}</span>
-          <div class="flex items-center gap-1.5 flex-wrap justify-end">
-            <a href="${escapeHTML(lead.url)}" target="_blank" rel="noopener noreferrer" class="btn" data-variant="outline" data-size="sm" aria-label="View original job post">
-              <span>View Post</span>
-              <i data-lucide="external-link" class="w-3 h-3"></i>
-            </a>
+        <h4 class="lead-title">${escapeHTML(lead.title)}</h4>
 
+        ${lead.body ? `<div class="lead-snippet">${escapeHTML(lead.body.slice(0, 280))}${lead.body.length > 280 ? '…' : ''}</div>` : ''}
+
+        <div class="lead-foot">
+          <span class="lead-time">Found ${formatRelative(lead.found_at)}</span>
+          <div class="lead-actions">
+            <a href="${escapeHTML(lead.url)}" target="_blank" rel="noopener noreferrer" class="btn-ghost btn-sm" aria-label="View original post">
+              <i data-lucide="external-link" style="width:12px;height:12px;"></i>
+              View
+            </a>
             ${isApplied ? `
-              <span class="status-pill applied">✓ Applied</span>
+              <span class="status applied">✓ Applied</span>
             ` : `
-              <button type="button" class="btn" data-variant="default" data-size="sm" onclick="openConvertModal(${lead.id})" aria-label="Track as application">
-                <i data-lucide="plus" class="w-3 h-3"></i>
-                <span>Track</span>
+              <button type="button" class="btn-primary btn-sm" onclick="openConvertModal(${lead.id})" aria-label="Track as application">
+                <i data-lucide="plus" style="width:12px;height:12px;"></i>
+                Track
               </button>
             `}
-
             ${lead.reviewed ? `
-              <button type="button" class="btn" data-variant="secondary" data-size="sm" onclick="unmarkLeadReviewed(${lead.id})" title="Move back to unreviewed queue" aria-label="Unmark as reviewed">
-                <i data-lucide="undo-2" class="w-3 h-3"></i>
-                <span>Unmark</span>
+              <button type="button" class="btn-ghost btn-sm" onclick="unmarkLeadReviewed(${lead.id})" aria-label="Unmark as reviewed">
+                <i data-lucide="undo-2" style="width:12px;height:12px;"></i>
               </button>
             ` : `
-              <button type="button" class="btn" data-variant="secondary" data-size="sm" onclick="markLeadReviewed(${lead.id})" title="Mark as reviewed" aria-label="Mark as reviewed">
-                <i data-lucide="check" class="w-3 h-3 text-emerald-400"></i>
-                <span>Reviewed</span>
+              <button type="button" class="btn-outline btn-sm" onclick="markLeadReviewed(${lead.id})" aria-label="Mark as reviewed">
+                <i data-lucide="check" style="width:12px;height:12px;color:var(--green-text)"></i>
+                Reviewed
               </button>
             `}
           </div>
@@ -726,7 +695,7 @@ async function markLeadReviewed(id) {
   if (reviewFilter === 'false') {
     const cardEl = document.getElementById(`lead-card-${id}`);
     if (cardEl) {
-      cardEl.classList.add('lead-card-dismissing');
+      cardEl.classList.add('dismissing');
       setTimeout(() => {
         leadsList = leadsList.filter(l => l.id !== id);
         renderLeads();
@@ -767,7 +736,7 @@ async function unmarkLeadReviewed(id) {
   if (reviewFilter === 'true') {
     const cardEl = document.getElementById(`lead-card-${id}`);
     if (cardEl) {
-      cardEl.classList.add('lead-card-dismissing');
+      cardEl.classList.add('dismissing');
       setTimeout(() => {
         leadsList = leadsList.filter(l => l.id !== id);
         renderLeads();
@@ -806,8 +775,8 @@ async function triggerScan() {
   const text = document.getElementById('scan-text');
 
   btn.disabled = true;
-  icon.innerHTML = '<i data-lucide="refresh-cw" class="w-3.5 h-3.5 animate-spin-icon"></i>';
-  text.textContent = 'Scanning...';
+  icon.innerHTML = '<i data-lucide="refresh-cw" style="width:13px;height:13px;" class="spin"></i>';
+  text.textContent = 'Scanning…';
   refreshIcons();
 
   try {
@@ -820,8 +789,8 @@ async function triggerScan() {
     showToast(`Scan failed: ${err.message}`, 'error');
   } finally {
     btn.disabled = false;
-    icon.innerHTML = '<i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>';
-    text.textContent = 'Run Scan';
+    icon.innerHTML = '<i data-lucide="refresh-cw" style="width:13px;height:13px;"></i>';
+    text.textContent = 'Scan';
     refreshIcons();
   }
 }
@@ -984,13 +953,13 @@ function renderAnalytics() {
     const count = applicationsList.filter(a => a.status === s.key).length;
     const pct = Math.round((count / total) * 100);
     return `
-      <div class="flex flex-col gap-1.5">
-        <div class="flex items-center justify-between text-xs">
-          <span class="font-medium text-foreground">${s.label}</span>
-          <span class="text-muted-foreground font-mono tabular-nums">${count} (${pct}%)</span>
+      <div style="display:flex;flex-direction:column;gap:5px" role="listitem">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12.5px;font-weight:500;color:var(--t0)">${s.label}</span>
+          <span style="font-size:11px;color:var(--t2);font-variant-numeric:tabular-nums;font-family:var(--mono)">${count} &nbsp;(${pct}%)</span>
         </div>
-        <div class="h-2 w-full bg-muted/60 rounded-full overflow-hidden">
-          <div style="width: ${Math.max(pct, 2)}%; background-color: ${s.color};" class="h-full rounded-full transition-all duration-300"></div>
+        <div style="height:5px;width:100%;background:var(--b1);border-radius:99px;overflow:hidden">
+          <div style="width:${Math.max(pct, 2)}%;background:${s.color};height:100%;border-radius:99px;transition:width 0.4s"></div>
         </div>
       </div>
     `;
@@ -1000,21 +969,21 @@ function renderAnalytics() {
   const reminders = applicationsList.filter(a => a.next_step && a.status !== 'rejected' && a.status !== 'withdrawn');
   if (reminders.length === 0) {
     remindersContainer.innerHTML = `
-      <div class="p-6 text-center text-xs text-muted-foreground/70 border border-dashed border-border/80 rounded-lg">
-        No upcoming action items or interview milestones.
+      <div style="padding:20px;text-align:center;font-size:12px;color:var(--t2);border:1px dashed var(--b1);border-radius:8px">
+        No upcoming action items.
       </div>
     `;
   } else {
     remindersContainer.innerHTML = reminders.map(a => `
-      <div class="p-3 rounded-lg bg-card/60 border border-border flex items-start justify-between gap-3">
-        <div class="flex flex-col gap-1">
-          <div class="text-xs font-semibold text-foreground">${escapeHTML(a.company)} — <span class="text-muted-foreground font-normal">${escapeHTML(a.role)}</span></div>
-          <div class="text-xs text-muted-foreground">${escapeHTML(a.next_step)}</div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px;background:var(--s2);border:1px solid var(--b0);border-radius:8px" role="listitem">
+        <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+          <div style="font-size:12.5px;font-weight:600;color:var(--t0)">${escapeHTML(a.company)} <span style="color:var(--t1);font-weight:400">— ${escapeHTML(a.role)}</span></div>
+          <div style="font-size:12px;color:var(--t1)">${escapeHTML(a.next_step)}</div>
         </div>
         ${a.next_step_date ? `
-          <span class="tag-pill text-amber-300 border-amber-500/20 bg-amber-500/10 shrink-0 tabular-nums">
-            <i data-lucide="calendar" class="w-3 h-3 text-amber-400"></i>
-            <span>${a.next_step_date}</span>
+          <span class="tag amber" style="flex-shrink:0;font-variant-numeric:tabular-nums">
+            <i data-lucide="calendar" style="width:10px;height:10px;"></i>
+            ${a.next_step_date}
           </span>
         ` : ''}
       </div>
@@ -1070,13 +1039,13 @@ function showToast(message, type = 'info') {
   if (!container) return;
 
   const iconName = type === 'success' ? 'check-circle' : type === 'error' ? 'alert-triangle' : 'info';
-  const iconColor = type === 'success' ? 'text-emerald-400' : type === 'error' ? 'text-rose-400' : 'text-primary';
+  const iconColor = type === 'success' ? 'var(--green-text)' : type === 'error' ? 'var(--red-text)' : 'var(--accent-text)';
 
   const toast = document.createElement('div');
-  toast.className = `toast-msg ${type}`;
+  toast.className = `toast ${type}`;
   toast.innerHTML = `
-    <i data-lucide="${iconName}" class="w-4 h-4 ${iconColor} shrink-0"></i>
-    <span class="text-xs leading-normal">${escapeHTML(message)}</span>
+    <i data-lucide="${iconName}" style="width:14px;height:14px;color:${iconColor};flex-shrink:0"></i>
+    <span>${escapeHTML(message)}</span>
   `;
 
   container.appendChild(toast);
@@ -1084,9 +1053,9 @@ function showToast(message, type = 'info') {
 
   setTimeout(() => {
     toast.style.opacity = '0';
-    toast.style.transform = 'translateY(8px)';
-    toast.style.transition = 'all 0.25s ease';
-    setTimeout(() => toast.remove(), 250);
+    toast.style.transform = 'translateY(6px) scale(0.97)';
+    toast.style.transition = 'opacity 0.2s, transform 0.2s';
+    setTimeout(() => toast.remove(), 200);
   }, 4000);
 }
 
