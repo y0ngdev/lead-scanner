@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lead Scanner & Application Pipeline Manager</title>
-  <meta name="description" content="Manage job leads and track your job applications pipeline across Ashby, Greenhouse, Lever, Workable, YC, and more.">
+  <title>Lead Scanner & Tech Job Discovery Pipeline</title>
+  <meta name="description" content="Automated tech job discovery across Ashby, Greenhouse, Lever, Workable, Y Combinator, Hacker News, and Reddit.">
   
-  <!-- Fonts -->
+  <!-- Fonts: Outfit (Display) & Inter (Body/Data) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- shadcn-html Theme & Tokens -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/codylindley/shadcn-html@latest/dist/theme/default-semantic-tokens.css">
@@ -31,56 +31,59 @@
 
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-background text-foreground antialiased min-h-screen flex flex-col font-sans">
+<body class="antialiased min-h-screen flex flex-col font-sans">
 
-  <!-- App Navigation Header -->
-  <header class="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
       
-      <!-- Brand Logo -->
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-xs">
+      <!-- Brand Logo & Live Radar Status -->
+      <div class="flex items-center gap-3 shrink-0">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-sm shrink-0">
           <i data-lucide="radar" class="w-5 h-5"></i>
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-base font-semibold tracking-tight text-foreground">Lead Scanner</h1>
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/15 text-primary border border-primary/25">Pipeline</span>
+            <h1 class="text-sm sm:text-base font-bold tracking-tight text-white font-display">Lead Scanner</h1>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>7 Sources Live</span>
+            </span>
           </div>
-          <p class="text-xs text-muted-foreground hidden sm:block">Automated Dev & Tech Job Discovery</p>
+          <p class="text-[11px] text-slate-400 hidden md:block">Ashby • Greenhouse • Lever • Workable • YC • Reddit</p>
         </div>
       </div>
 
-      <!-- Navigation Tabs -->
-      <nav class="flex items-center bg-muted/70 p-1 rounded-lg border border-border" aria-label="Main Navigation">
-        <button class="nav-tab active flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all" id="tab-applications" onclick="switchTab('applications')">
-          <i data-lucide="kanban" class="w-3.5 h-3.5"></i>
-          <span>Applications</span>
-          <span class="tab-count-pill" id="count-applications">0</span>
-        </button>
-        <button class="nav-tab flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all text-muted-foreground hover:text-foreground" id="tab-leads" onclick="switchTab('leads')">
-          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-          <span>Leads Queue</span>
+      <!-- Navigation Tabs (Center Segmented Control) -->
+      <nav class="flex items-center bg-slate-900/90 p-1 rounded-xl border border-white/10 shadow-inner" aria-label="Main Navigation">
+        <button class="nav-tab" id="tab-leads" onclick="switchTab('leads')">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span>Discovered Leads</span>
           <span class="tab-count-pill" id="count-leads">0</span>
         </button>
-        <button class="nav-tab flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all text-muted-foreground hover:text-foreground" id="tab-analytics" onclick="switchTab('analytics')">
+        <button class="nav-tab active" id="tab-applications" onclick="switchTab('applications')">
+          <i data-lucide="kanban" class="w-3.5 h-3.5"></i>
+          <span>Pipeline</span>
+          <span class="tab-count-pill" id="count-applications">0</span>
+        </button>
+        <button class="nav-tab" id="tab-analytics" onclick="switchTab('analytics')">
           <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>
           <span>Insights</span>
         </button>
       </nav>
 
-      <!-- Action Buttons -->
-      <div class="flex items-center gap-2">
-        <button class="btn" data-variant="outline" data-size="sm" id="btn-run-scan" onclick="triggerScan()" title="Trigger scan across Ashby, Greenhouse, Lever, Workable, YC, Reddit...">
-          <span id="scan-icon" class="inline-flex items-center"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i></span>
-          <span id="scan-text" class="text-xs font-medium">Run Scan</span>
+      <!-- Action Cluster (Right) -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button class="btn" data-variant="outline" data-size="sm" id="btn-run-scan" onclick="triggerScan()" title="Trigger live search across job boards and Google Dork">
+          <span id="scan-icon" class="inline-flex items-center"><i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-indigo-400"></i></span>
+          <span id="scan-text" class="text-xs font-semibold">Run Scan</span>
         </button>
         <button class="btn" data-variant="default" data-size="sm" onclick="openAddApplicationModal()">
           <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-          <span class="text-xs font-medium">Add Application</span>
+          <span class="text-xs font-semibold">Add Application</span>
         </button>
-        <button class="btn" data-variant="ghost" data-size="icon" onclick="openSettingsModal()" title="API Settings">
-          <i data-lucide="settings" class="w-4 h-4"></i>
+        <button class="btn" data-variant="ghost" data-size="icon" onclick="openSettingsModal()" title="API Settings" aria-label="Settings">
+          <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i>
         </button>
       </div>
 
@@ -88,99 +91,212 @@
   </header>
 
   <!-- Main Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col gap-5">
 
-    <!-- KPI Stats Ribbon -->
-    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" aria-label="Pipeline Metrics">
-      <!-- Total Applications -->
-      <div class="card p-3.5 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
-          <i data-lucide="folder" class="w-4 h-4"></i>
+    <!-- VIEW 1: Leads Discovery Queue (The Feed) -->
+    <div id="view-leads" class="view-panel flex flex-col gap-4" style="display: none;">
+      
+      <!-- Leads Intelligence Ribbon -->
+      <section class="leads-intel-bar grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="intel-stat-card">
+          <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Discovered</div>
+          <div class="flex items-baseline gap-2 mt-0.5">
+            <span class="text-xl sm:text-2xl font-bold text-white tabular-nums" id="lead-stat-total">0</span>
+            <span class="text-[11px] text-emerald-400 font-medium">Auto-Synced</span>
+          </div>
         </div>
-        <div>
-          <div class="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">Total Pipeline</div>
-          <div class="text-xl font-bold tracking-tight text-foreground tabular-nums" id="stat-total">0</div>
+        <div class="intel-stat-card">
+          <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Unreviewed Queue</div>
+          <div class="flex items-baseline gap-2 mt-0.5">
+            <span class="text-xl sm:text-2xl font-bold text-indigo-400 tabular-nums" id="lead-stat-unreviewed">0</span>
+            <span class="text-[11px] text-slate-400">Ready to Triage</span>
+          </div>
+        </div>
+        <div class="intel-stat-card">
+          <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Converted to Pipeline</div>
+          <div class="flex items-baseline gap-2 mt-0.5">
+            <span class="text-xl sm:text-2xl font-bold text-white tabular-nums" id="lead-stat-tracked">0</span>
+            <span class="text-[11px] text-slate-400">Tracked Jobs</span>
+          </div>
+        </div>
+        <div class="intel-stat-card">
+          <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Monitored Sources</div>
+          <div class="flex items-baseline gap-1.5 mt-0.5">
+            <span class="text-xl sm:text-2xl font-bold text-white tabular-nums">7</span>
+            <span class="text-[11px] text-slate-400">Platforms Active</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Leads Filter Toolbar -->
+      <div class="flex flex-col gap-3 bg-slate-900/60 p-3 sm:p-3.5 rounded-2xl border border-white/10 shadow-sm">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          
+          <div class="flex flex-1 flex-wrap items-center gap-2.5">
+            <!-- Search -->
+            <div class="relative flex-1 min-w-[240px] max-w-md">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+              <input type="text" id="lead-search" class="input pl-9 pr-10 h-8 text-xs w-full" placeholder="Search keywords, roles, companies in leads..." oninput="handleLeadSearch()">
+              <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono text-slate-400 border border-white/10 rounded bg-white/5 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">/</kbd>
+            </div>
+
+            <!-- Review Filter (Segmented) -->
+            <div class="flex items-center bg-slate-950/80 p-0.5 rounded-lg border border-white/10 text-xs">
+              <select id="lead-review-filter" class="input h-7 text-xs bg-transparent border-0 px-2 py-0 cursor-pointer" onchange="loadLeads()" aria-label="Filter reviewed status">
+                <option value="false">Unreviewed Only</option>
+                <option value="true">Reviewed Only</option>
+                <option value="">All Leads</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0">
+            <button class="btn" data-variant="outline" data-size="sm" onclick="loadLeads()" title="Refresh Leads Queue">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-indigo-400"></i>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Source Chips -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 text-xs border-t border-white/5 scrollbar-none" id="source-filter-chips">
+          <span class="text-[11px] font-medium text-slate-400 mr-1 shrink-0">Filter by Source:</span>
+          <button type="button" class="source-chip active" data-source="" onclick="setSourceFilter('')">All Sources</button>
+          <button type="button" class="source-chip" data-source="ashby" onclick="setSourceFilter('ashby')">Ashby</button>
+          <button type="button" class="source-chip" data-source="greenhouse" onclick="setSourceFilter('greenhouse')">Greenhouse</button>
+          <button type="button" class="source-chip" data-source="lever" onclick="setSourceFilter('lever')">Lever</button>
+          <button type="button" class="source-chip" data-source="workable" onclick="setSourceFilter('workable')">Workable</button>
+          <button type="button" class="source-chip" data-source="yc" onclick="setSourceFilter('yc')">Y Combinator</button>
+          <button type="button" class="source-chip" data-source="hackernews" onclick="setSourceFilter('hackernews')">Hacker News</button>
+          <button type="button" class="source-chip" data-source="reddit" onclick="setSourceFilter('reddit')">Reddit</button>
+          <button type="button" class="source-chip" data-source="google-dork" onclick="setSourceFilter('google-dork')">Google Dork</button>
+          <!-- Hidden fallback select for compatibility -->
+          <select id="lead-source-filter" class="hidden" onchange="loadLeads()"><option value="">All</option></select>
         </div>
       </div>
 
-      <!-- Applied Stage -->
-      <div class="card p-3.5 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center shrink-0">
-          <i data-lucide="send" class="w-4 h-4"></i>
-        </div>
-        <div>
-          <div class="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">Submitted</div>
-          <div class="text-xl font-bold tracking-tight text-foreground tabular-nums" id="stat-applied">0</div>
-        </div>
+      <!-- Leads Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5" id="leads-container">
+        <!-- populated by JS -->
       </div>
 
-      <!-- Interviewing -->
-      <div class="card p-3.5 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
-          <i data-lucide="messages-square" class="w-4 h-4"></i>
-        </div>
-        <div>
-          <div class="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">In Interview</div>
-          <div class="text-xl font-bold tracking-tight text-foreground tabular-nums" id="stat-interviewing">0</div>
-        </div>
-      </div>
+    </div>
 
-      <!-- Offers -->
-      <div class="card p-3.5 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
-          <i data-lucide="trophy" class="w-4 h-4"></i>
-        </div>
-        <div>
-          <div class="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">Offers</div>
-          <div class="text-xl font-bold tracking-tight text-foreground tabular-nums" id="stat-offer">0</div>
-        </div>
-      </div>
-
-      <!-- Response Rate -->
-      <div class="card p-3.5 flex items-center gap-3 col-span-2 sm:col-span-1">
-        <div class="w-9 h-9 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center shrink-0">
-          <i data-lucide="trending-up" class="w-4 h-4"></i>
-        </div>
-        <div>
-          <div class="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">Response Rate</div>
-          <div class="text-xl font-bold tracking-tight text-foreground tabular-nums" id="stat-rate">0%</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- VIEW 1: Applications Pipeline -->
+    <!-- VIEW 2: Applications Pipeline (The Tracker) -->
     <div id="view-applications" class="view-panel flex flex-col gap-4">
       
-      <!-- Toolbar -->
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card/60 p-3 rounded-xl border border-border">
-        <div class="flex flex-1 items-center gap-3">
+      <!-- Pipeline KPI Metrics Strip -->
+      <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" aria-label="Pipeline Metrics">
+        <!-- Total Pipeline -->
+        <div class="metric-card">
+          <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
+            <i data-lucide="folder" class="w-4 h-4"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="text-[10px] uppercase font-semibold tracking-wider text-slate-400 truncate">Total Tracked</div>
+            <div class="text-lg sm:text-xl font-bold tracking-tight text-white tabular-nums" id="stat-total">0</div>
+          </div>
+        </div>
+
+        <!-- Applied -->
+        <div class="metric-card">
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center shrink-0">
+            <i data-lucide="send" class="w-4 h-4"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="text-[10px] uppercase font-semibold tracking-wider text-slate-400 truncate">Submitted</div>
+            <div class="text-lg sm:text-xl font-bold tracking-tight text-white tabular-nums" id="stat-applied">0</div>
+          </div>
+        </div>
+
+        <!-- In Interview -->
+        <div class="metric-card">
+          <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
+            <i data-lucide="messages-square" class="w-4 h-4"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="text-[10px] uppercase font-semibold tracking-wider text-slate-400 truncate">In Interviews</div>
+            <div class="text-lg sm:text-xl font-bold tracking-tight text-white tabular-nums" id="stat-interviewing">0</div>
+          </div>
+        </div>
+
+        <!-- Offers -->
+        <div class="metric-card">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+            <i data-lucide="trophy" class="w-4 h-4"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="text-[10px] uppercase font-semibold tracking-wider text-slate-400 truncate">Offers Received</div>
+            <div class="text-lg sm:text-xl font-bold tracking-tight text-white tabular-nums" id="stat-offer">0</div>
+          </div>
+        </div>
+
+        <!-- Response Rate -->
+        <div class="metric-card col-span-2 sm:col-span-1">
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center shrink-0">
+            <i data-lucide="trending-up" class="w-4 h-4"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="text-[10px] uppercase font-semibold tracking-wider text-slate-400 truncate">Response Rate</div>
+            <div class="text-lg sm:text-xl font-bold tracking-tight text-white tabular-nums" id="stat-rate">0%</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Empty Pipeline Callout Banner (shown when 0 applications) -->
+      <div id="pipeline-empty-banner" class="p-5 sm:p-6 rounded-2xl border border-indigo-500/25 bg-gradient-to-r from-indigo-950/40 via-purple-950/20 to-slate-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg">
+        <div class="flex items-center gap-3.5">
+          <div class="w-11 h-11 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
+            <i data-lucide="sparkles" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-white">Your Job Pipeline is Ready</h3>
+            <p class="text-xs text-slate-300 mt-0.5 leading-relaxed">
+              Explore discovered job leads from Ashby, Greenhouse, Lever, YC & Reddit, or add your current applications manually.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button class="btn" data-variant="default" data-size="sm" onclick="switchTab('leads')">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+            <span>Browse Leads Queue</span>
+          </button>
+          <button class="btn" data-variant="outline" data-size="sm" onclick="openAddApplicationModal()">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>Add Application</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Applications Toolbar -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-900/50 p-2.5 rounded-xl border border-white/10">
+        <div class="flex flex-1 items-center gap-2.5">
           <!-- Search -->
           <div class="relative flex-1 max-w-sm">
-            <i data-lucide="search" class="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-            <input type="text" id="app-search" class="input pl-9 pr-10 h-9 text-xs w-full" placeholder="Search company, role, keywords..." oninput="handleAppSearch()">
-            <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono text-muted-foreground/60 border border-border/80 rounded bg-muted/40 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">/</kbd>
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            <input type="text" id="app-search" class="input pl-9 pr-10 h-8 text-xs w-full" placeholder="Search company, role, keywords..." oninput="handleAppSearch()">
+            <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono text-slate-400 border border-white/10 rounded bg-white/5 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">/</kbd>
           </div>
 
           <!-- Status Filter -->
-          <select id="app-status-filter" class="input h-9 text-xs max-w-[160px] bg-background" onchange="handleAppFilter()">
+          <select id="app-status-filter" class="input h-8 text-xs max-w-[150px] bg-slate-900" onchange="handleAppFilter()" aria-label="Filter by stage">
             <option value="all">All Stages</option>
             <option value="wishlist">📌 Wishlist</option>
             <option value="applied">📤 Applied</option>
             <option value="screening">📞 Screening</option>
             <option value="interviewing">💻 Interviewing</option>
             <option value="offer">🎉 Offer</option>
-            <option value="rejected">❌ Rejected</option>
-            <option value="withdrawn">📁 Withdrawn</option>
+            <option value="rejected">❌ Closed</option>
           </select>
         </div>
 
         <!-- View Mode Switcher -->
-        <div class="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg border border-border">
-          <button class="px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 active bg-background text-foreground shadow-xs" id="mode-kanban" onclick="setViewMode('kanban')">
+        <div class="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-lg border border-white/10">
+          <button class="px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 active bg-slate-800 text-white shadow-xs" id="mode-kanban" onclick="setViewMode('kanban')">
             <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
             <span>Kanban</span>
           </button>
-          <button class="px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 text-muted-foreground hover:text-foreground" id="mode-table" onclick="setViewMode('table')">
+          <button class="px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 text-slate-400 hover:text-white" id="mode-table" onclick="setViewMode('table')">
             <i data-lucide="list" class="w-3.5 h-3.5"></i>
             <span>Table</span>
           </button>
@@ -188,16 +304,21 @@
       </div>
 
       <!-- Kanban Board -->
-      <div id="kanban-view" class="kanban-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5 items-start">
+      <div id="kanban-view" class="kanban-grid items-start">
         
         <!-- 1. Wishlist -->
         <div class="kanban-col" data-status="wishlist" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'wishlist')">
           <div class="kanban-col-header">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-              <span class="text-xs font-semibold text-foreground">Wishlist</span>
+              <span class="text-xs font-semibold text-white">Wishlist</span>
             </div>
-            <span class="badge" data-variant="secondary" id="badge-wishlist">0</span>
+            <div class="flex items-center gap-1.5">
+              <span class="badge" data-variant="secondary" id="badge-wishlist">0</span>
+              <button type="button" class="btn-col-add" onclick="openAddApplicationModal('wishlist')" title="Add to Wishlist" aria-label="Add to Wishlist">
+                <i data-lucide="plus" class="w-3 h-3"></i>
+              </button>
+            </div>
           </div>
           <div class="kanban-col-cards" id="cards-wishlist"></div>
         </div>
@@ -207,9 +328,14 @@
           <div class="kanban-col-header">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-blue-400"></span>
-              <span class="text-xs font-semibold text-foreground">Applied</span>
+              <span class="text-xs font-semibold text-white">Applied</span>
             </div>
-            <span class="badge" data-variant="secondary" id="badge-applied">0</span>
+            <div class="flex items-center gap-1.5">
+              <span class="badge" data-variant="secondary" id="badge-applied">0</span>
+              <button type="button" class="btn-col-add" onclick="openAddApplicationModal('applied')" title="Add to Applied" aria-label="Add to Applied">
+                <i data-lucide="plus" class="w-3 h-3"></i>
+              </button>
+            </div>
           </div>
           <div class="kanban-col-cards" id="cards-applied"></div>
         </div>
@@ -219,9 +345,14 @@
           <div class="kanban-col-header">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-              <span class="text-xs font-semibold text-foreground">Screening</span>
+              <span class="text-xs font-semibold text-white">Screening</span>
             </div>
-            <span class="badge" data-variant="secondary" id="badge-screening">0</span>
+            <div class="flex items-center gap-1.5">
+              <span class="badge" data-variant="secondary" id="badge-screening">0</span>
+              <button type="button" class="btn-col-add" onclick="openAddApplicationModal('screening')" title="Add to Screening" aria-label="Add to Screening">
+                <i data-lucide="plus" class="w-3 h-3"></i>
+              </button>
+            </div>
           </div>
           <div class="kanban-col-cards" id="cards-screening"></div>
         </div>
@@ -231,9 +362,14 @@
           <div class="kanban-col-header">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-purple-400"></span>
-              <span class="text-xs font-semibold text-foreground">Interviewing</span>
+              <span class="text-xs font-semibold text-white">Interviewing</span>
             </div>
-            <span class="badge" data-variant="secondary" id="badge-interviewing">0</span>
+            <div class="flex items-center gap-1.5">
+              <span class="badge" data-variant="secondary" id="badge-interviewing">0</span>
+              <button type="button" class="btn-col-add" onclick="openAddApplicationModal('interviewing')" title="Add to Interviewing" aria-label="Add to Interviewing">
+                <i data-lucide="plus" class="w-3 h-3"></i>
+              </button>
+            </div>
           </div>
           <div class="kanban-col-cards" id="cards-interviewing"></div>
         </div>
@@ -243,21 +379,31 @@
           <div class="kanban-col-header">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-              <span class="text-xs font-semibold text-foreground">Offer</span>
+              <span class="text-xs font-semibold text-white">Offer</span>
             </div>
-            <span class="badge" data-variant="secondary" id="badge-offer">0</span>
+            <div class="flex items-center gap-1.5">
+              <span class="badge" data-variant="secondary" id="badge-offer">0</span>
+              <button type="button" class="btn-col-add" onclick="openAddApplicationModal('offer')" title="Add to Offer" aria-label="Add to Offer">
+                <i data-lucide="plus" class="w-3 h-3"></i>
+              </button>
+            </div>
           </div>
           <div class="kanban-col-cards" id="cards-offer"></div>
         </div>
 
-        <!-- 6. Rejected / Withdrawn -->
+        <!-- 6. Rejected / Closed -->
         <div class="kanban-col" data-status="rejected" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'rejected')">
           <div class="kanban-col-header">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-rose-400"></span>
-              <span class="text-xs font-semibold text-foreground">Closed</span>
+              <span class="text-xs font-semibold text-white">Closed</span>
             </div>
-            <span class="badge" data-variant="secondary" id="badge-rejected">0</span>
+            <div class="flex items-center gap-1.5">
+              <span class="badge" data-variant="secondary" id="badge-rejected">0</span>
+              <button type="button" class="btn-col-add" onclick="openAddApplicationModal('rejected')" title="Add to Closed" aria-label="Add to Closed">
+                <i data-lucide="plus" class="w-3 h-3"></i>
+              </button>
+            </div>
           </div>
           <div class="kanban-col-cards" id="cards-rejected"></div>
         </div>
@@ -269,7 +415,7 @@
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse text-xs">
             <thead>
-              <tr class="border-b border-border bg-muted/40 text-muted-foreground font-medium">
+              <tr class="border-b border-white/10 bg-slate-900/80 text-slate-400 font-medium">
                 <th class="py-3 px-4 font-semibold">Company & Role</th>
                 <th class="py-3 px-4 font-semibold">Stage</th>
                 <th class="py-3 px-4 font-semibold">Source</th>
@@ -279,57 +425,11 @@
                 <th class="py-3 px-4 font-semibold text-right">Actions</th>
               </tr>
             </thead>
-            <tbody id="applications-table-body" class="divide-y divide-border">
+            <tbody id="applications-table-body" class="divide-y divide-white/5">
               <!-- populated by JS -->
             </tbody>
           </table>
         </div>
-      </div>
-
-    </div>
-
-    <!-- VIEW 2: Leads Discovery Queue -->
-    <div id="view-leads" class="view-panel flex flex-col gap-4" style="display: none;">
-      
-      <!-- Leads Toolbar -->
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card/60 p-3 rounded-xl border border-border">
-        <div class="flex flex-1 flex-wrap items-center gap-3">
-          <div class="relative flex-1 min-w-[240px] max-w-md">
-            <i data-lucide="search" class="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-            <input type="text" id="lead-search" class="input pl-9 pr-10 h-9 text-xs w-full" placeholder="Search keywords, titles, companies in leads..." oninput="handleLeadSearch()">
-            <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono text-muted-foreground/60 border border-border/80 rounded bg-muted/40 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">/</kbd>
-          </div>
-
-          <select id="lead-source-filter" class="input h-9 text-xs max-w-[160px] bg-background" onchange="loadLeads()">
-            <option value="">All Sources</option>
-            <option value="ashby">Ashby</option>
-            <option value="greenhouse">Greenhouse</option>
-            <option value="lever">Lever</option>
-            <option value="workable">Workable</option>
-            <option value="google-dork">Google Dork (Serper)</option>
-            <option value="yc">Y Combinator</option>
-            <option value="hackernews">Hacker News</option>
-            <option value="weworkremotely">We Work Remotely</option>
-            <option value="reddit">Reddit</option>
-            <option value="devrel-jobs">DevRel Jobs</option>
-          </select>
-
-          <select id="lead-review-filter" class="input h-9 text-xs max-w-[150px] bg-background" onchange="loadLeads()">
-            <option value="false">Unreviewed Only</option>
-            <option value="true">Reviewed Only</option>
-            <option value="">All Leads</option>
-          </select>
-        </div>
-
-        <button class="btn" data-variant="outline" data-size="sm" onclick="loadLeads()">
-          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-          <span>Refresh</span>
-        </button>
-      </div>
-
-      <!-- Leads Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="leads-container">
-        <!-- populated by JS -->
       </div>
 
     </div>
@@ -340,12 +440,12 @@
         
         <!-- Pipeline Funnel -->
         <div class="card p-5 flex flex-col gap-4">
-          <div class="flex items-center justify-between border-b border-border pb-3">
+          <div class="flex items-center justify-between border-b border-white/10 pb-3">
             <div class="flex items-center gap-2">
-              <i data-lucide="git-pull-request" class="w-4 h-4 text-primary"></i>
-              <h3 class="text-sm font-semibold text-foreground">Application Conversion Funnel</h3>
+              <i data-lucide="git-pull-request" class="w-4 h-4 text-indigo-400"></i>
+              <h3 class="text-sm font-semibold text-white">Application Conversion Funnel</h3>
             </div>
-            <span class="text-xs text-muted-foreground">Progression by Stage</span>
+            <span class="text-xs text-slate-400">Progression by Stage</span>
           </div>
           <div id="funnel-container" class="flex flex-col gap-3">
             <!-- populated by JS -->
@@ -354,12 +454,12 @@
 
         <!-- Upcoming Next Steps & Reminders -->
         <div class="card p-5 flex flex-col gap-4">
-          <div class="flex items-center justify-between border-b border-border pb-3">
+          <div class="flex items-center justify-between border-b border-white/10 pb-3">
             <div class="flex items-center gap-2">
               <i data-lucide="calendar" class="w-4 h-4 text-purple-400"></i>
-              <h3 class="text-sm font-semibold text-foreground">Upcoming Next Steps & Milestones</h3>
+              <h3 class="text-sm font-semibold text-white">Upcoming Next Steps & Milestones</h3>
             </div>
-            <span class="text-xs text-muted-foreground">Action items</span>
+            <span class="text-xs text-slate-400">Action Items</span>
           </div>
           <div id="upcoming-reminders-container" class="flex flex-col gap-2.5">
             <!-- populated by JS -->
@@ -374,13 +474,13 @@
   <!-- MODAL: Add / Edit Application -->
   <div class="modal-backdrop" id="application-modal" style="display: none;">
     <div class="modal-card">
-      <div class="flex items-center justify-between border-b border-border px-6 py-4">
+      <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
         <div class="flex items-center gap-2.5">
-          <i data-lucide="file-plus" class="w-4 h-4 text-primary"></i>
-          <h3 class="text-sm font-semibold text-foreground" id="modal-app-title">Track Application</h3>
+          <i data-lucide="file-plus" class="w-4 h-4 text-indigo-400"></i>
+          <h3 class="text-sm font-semibold text-white" id="modal-app-title">Track Application</h3>
         </div>
-        <button type="button" class="btn" data-variant="ghost" data-size="icon" onclick="closeApplicationModal()">
-          <i data-lucide="x" class="w-4 h-4"></i>
+        <button type="button" class="btn" data-variant="ghost" data-size="icon" onclick="closeApplicationModal()" aria-label="Close">
+          <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
         </button>
       </div>
 
@@ -390,38 +490,37 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5">
-            <label for="form-company" class="text-xs font-medium text-foreground">Company *</label>
+            <label for="form-company" class="text-xs font-medium text-slate-200">Company *</label>
             <input type="text" id="form-company" class="input text-xs h-9" required placeholder="e.g. Stripe, Linear, Vercel">
           </div>
           <div class="flex flex-col gap-1.5">
-            <label for="form-role" class="text-xs font-medium text-foreground">Role / Job Title *</label>
+            <label for="form-role" class="text-xs font-medium text-slate-200">Role / Job Title *</label>
             <input type="text" id="form-role" class="input text-xs h-9" required placeholder="e.g. Senior Software Engineer">
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5">
-            <label for="form-status" class="text-xs font-medium text-foreground">Pipeline Stage</label>
-            <select id="form-status" class="input text-xs h-9 bg-background">
+            <label for="form-status" class="text-xs font-medium text-slate-200">Pipeline Stage</label>
+            <select id="form-status" class="input text-xs h-9 bg-slate-900">
               <option value="wishlist">📌 Wishlist</option>
               <option value="applied" selected>📤 Applied</option>
               <option value="screening">📞 Screening (Phone Screen)</option>
               <option value="interviewing">💻 Interviewing (Tech/Onsite)</option>
               <option value="offer">🎉 Offer Received</option>
-              <option value="rejected">❌ Rejected</option>
-              <option value="withdrawn">📁 Withdrawn</option>
+              <option value="rejected">❌ Closed</option>
             </select>
           </div>
           <div class="flex flex-col gap-1.5">
-            <label for="form-applied-date" class="text-xs font-medium text-foreground">Date Applied</label>
+            <label for="form-applied-date" class="text-xs font-medium text-slate-200">Date Applied</label>
             <input type="date" id="form-applied-date" class="input text-xs h-9">
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5">
-            <label for="form-source" class="text-xs font-medium text-foreground">Source</label>
-            <select id="form-source" class="input text-xs h-9 bg-background">
+            <label for="form-source" class="text-xs font-medium text-slate-200">Source</label>
+            <select id="form-source" class="input text-xs h-9 bg-slate-900">
               <option value="ashby">Ashby</option>
               <option value="greenhouse">Greenhouse</option>
               <option value="lever">Lever</option>
@@ -436,50 +535,50 @@
             </select>
           </div>
           <div class="flex flex-col gap-1.5">
-            <label for="form-salary" class="text-xs font-medium text-foreground">Salary / Compensation</label>
+            <label for="form-salary" class="text-xs font-medium text-slate-200">Salary / Compensation</label>
             <input type="text" id="form-salary" class="input text-xs h-9" placeholder="e.g. $160,000 - $190,000">
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5">
-            <label for="form-location" class="text-xs font-medium text-foreground">Location</label>
+            <label for="form-location" class="text-xs font-medium text-slate-200">Location</label>
             <input type="text" id="form-location" class="input text-xs h-9" placeholder="e.g. Remote (US), San Francisco, London">
           </div>
           <div class="flex flex-col gap-1.5">
-            <label for="form-job-url" class="text-xs font-medium text-foreground">Job Posting URL</label>
+            <label for="form-job-url" class="text-xs font-medium text-slate-200">Job Posting URL</label>
             <input type="url" id="form-job-url" class="input text-xs h-9" placeholder="https://...">
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5">
-            <label for="form-contact-name" class="text-xs font-medium text-foreground">Contact / Recruiter Name</label>
+            <label for="form-contact-name" class="text-xs font-medium text-slate-200">Contact / Recruiter Name</label>
             <input type="text" id="form-contact-name" class="input text-xs h-9" placeholder="e.g. Sarah Connor">
           </div>
           <div class="flex flex-col gap-1.5">
-            <label for="form-contact-email" class="text-xs font-medium text-foreground">Contact Email / LinkedIn</label>
+            <label for="form-contact-email" class="text-xs font-medium text-slate-200">Contact Email / LinkedIn</label>
             <input type="text" id="form-contact-email" class="input text-xs h-9" placeholder="e.g. sarah@company.com">
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5">
-            <label for="form-next-step" class="text-xs font-medium text-foreground">Next Step / Action Item</label>
+            <label for="form-next-step" class="text-xs font-medium text-slate-200">Next Step / Action Item</label>
             <input type="text" id="form-next-step" class="input text-xs h-9" placeholder="e.g. System Design interview round">
           </div>
           <div class="flex flex-col gap-1.5">
-            <label for="form-next-step-date" class="text-xs font-medium text-foreground">Next Step Date</label>
+            <label for="form-next-step-date" class="text-xs font-medium text-slate-200">Next Step Date</label>
             <input type="date" id="form-next-step-date" class="input text-xs h-9">
           </div>
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label for="form-notes" class="text-xs font-medium text-foreground">Notes, Questions & Preparation</label>
+          <label for="form-notes" class="text-xs font-medium text-slate-200">Notes, Questions & Preparation</label>
           <textarea id="form-notes" class="input text-xs min-h-[85px] py-2 leading-relaxed" placeholder="Tech stack, interview prep, team notes..."></textarea>
         </div>
 
-        <div class="flex items-center justify-end gap-2 border-t border-border pt-4 mt-2">
+        <div class="flex items-center justify-end gap-2 border-t border-white/10 pt-4 mt-2">
           <button type="button" class="btn" data-variant="outline" data-size="sm" onclick="closeApplicationModal()">Cancel</button>
           <button type="submit" class="btn" data-variant="default" data-size="sm" id="btn-save-app">Save Application</button>
         </div>
@@ -490,25 +589,25 @@
   <!-- MODAL: Settings -->
   <div class="modal-backdrop" id="settings-modal" style="display: none;">
     <div class="modal-card max-w-md">
-      <div class="flex items-center justify-between border-b border-border px-6 py-4">
+      <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
         <div class="flex items-center gap-2">
-          <i data-lucide="sliders" class="w-4 h-4 text-primary"></i>
-          <h3 class="text-sm font-semibold text-foreground">Scanner Settings</h3>
+          <i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i>
+          <h3 class="text-sm font-semibold text-white">Scanner Settings</h3>
         </div>
-        <button type="button" class="btn" data-variant="ghost" data-size="icon" onclick="closeSettingsModal()">
-          <i data-lucide="x" class="w-4 h-4"></i>
+        <button type="button" class="btn" data-variant="ghost" data-size="icon" onclick="closeSettingsModal()" aria-label="Close">
+          <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
         </button>
       </div>
       <div class="p-6 flex flex-col gap-3">
-        <label for="setting-api-url" class="text-xs font-medium text-foreground">Encore API Base URL</label>
+        <label for="setting-api-url" class="text-xs font-medium text-slate-200">Encore API Base URL</label>
         <input type="text" id="setting-api-url" class="input text-xs h-9" placeholder="http://localhost:4000">
-        <p class="text-[11px] text-muted-foreground leading-normal">
+        <p class="text-[11px] text-slate-400 leading-normal">
           Defaults to the active hosting domain when running on Encore Cloud, or http://localhost:4000 for local development.
         </p>
       </div>
-      <div class="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
+      <div class="flex items-center justify-end gap-2 border-t border-white/10 px-6 py-4">
         <button type="button" class="btn" data-variant="outline" data-size="sm" onclick="closeSettingsModal()">Cancel</button>
-        <button type="button" class="btn" data-variant="default" data-size="sm" onclick="saveSettings()">Save & Reconnect</button>
+        <button type="submit" class="btn" data-variant="default" data-size="sm" onclick="saveSettings()">Save & Reconnect</button>
       </div>
     </div>
   </div>

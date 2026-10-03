@@ -86,6 +86,10 @@ function getSourceClass(source) {
 // Navigation & Tab Switching
 function switchTab(tab) {
   currentTab = tab;
+  try {
+    localStorage.setItem('lead_scanner_active_tab', tab);
+  } catch (e) {}
+
   document.querySelectorAll('.nav-tab').forEach(btn => {
     btn.classList.remove('active', 'text-foreground');
     btn.classList.add('text-muted-foreground');
@@ -150,12 +154,21 @@ async function loadStats() {
     const stats = await apiFetch('/application-stats');
     if (!stats) return;
 
-    document.getElementById('stat-total').textContent = stats.total || 0;
-    document.getElementById('stat-applied').textContent = stats.applied || 0;
-    document.getElementById('stat-interviewing').textContent = (stats.screening + stats.interviewing) || 0;
-    document.getElementById('stat-offer').textContent = stats.offer || 0;
-    document.getElementById('stat-rate').textContent = `${Math.round(stats.response_rate || 0)}%`;
-    document.getElementById('count-applications').textContent = stats.total || 0;
+    const total = stats.total || 0;
+    const statTotalEl = document.getElementById('stat-total');
+    if (statTotalEl) statTotalEl.textContent = total;
+    const statAppliedEl = document.getElementById('stat-applied');
+    if (statAppliedEl) statAppliedEl.textContent = stats.applied || 0;
+    const statInterviewingEl = document.getElementById('stat-interviewing');
+    if (statInterviewingEl) statInterviewingEl.textContent = (stats.screening + stats.interviewing) || 0;
+    const statOfferEl = document.getElementById('stat-offer');
+    if (statOfferEl) statOfferEl.textContent = stats.offer || 0;
+    const statRateEl = document.getElementById('stat-rate');
+    if (statRateEl) statRateEl.textContent = `${Math.round(stats.response_rate || 0)}%`;
+    const countAppsEl = document.getElementById('count-applications');
+    if (countAppsEl) countAppsEl.textContent = total;
+    const trackedEl = document.getElementById('lead-stat-tracked');
+    if (trackedEl) trackedEl.textContent = total;
   } catch (err) {
     console.warn('Failed loading stats:', err);
   }
@@ -177,7 +190,14 @@ async function loadApplications() {
   try {
     const res = await apiFetch(endpoint);
     applicationsList = res?.applications || [];
-    document.getElementById('count-applications').textContent = res?.total || applicationsList.length;
+    const countAppsEl = document.getElementById('count-applications');
+    if (countAppsEl) countAppsEl.textContent = res?.total || applicationsList.length;
+
+    // Toggle Empty Pipeline Callout Banner
+    const emptyBanner = document.getElementById('pipeline-empty-banner');
+    if (emptyBanner) {
+      emptyBanner.style.display = applicationsList.length === 0 ? 'flex' : 'none';
+    }
 
     if (currentViewMode === 'kanban') {
       renderKanban();
@@ -230,8 +250,9 @@ function renderKanban() {
 
     if (grouped[col].length === 0) {
       container.innerHTML = `
-        <div class="flex flex-col items-center justify-center p-6 text-center text-muted-foreground/60 border border-dashed border-border/80 rounded-lg">
-          <span class="text-xs">Empty stage</span>
+        <div class="kanban-empty-dropzone" onclick="openAddApplicationModal('${col}')" title="Click to add application to ${col}">
+          <i data-lucide="plus" class="w-3.5 h-3.5 opacity-60"></i>
+          <span>Add ${col}</span>
         </div>
       `;
       return;
@@ -498,13 +519,41 @@ async function loadLeads() {
     const res = await apiFetch(endpoint);
     leadsList = res?.leads || [];
     const countEl = document.getElementById('count-leads');
-    if (countEl) {
-      countEl.textContent = res?.total !== undefined ? res.total : leadsList.length;
+    const totalCount = res?.total !== undefined ? res.total : leadsList.length;
+    if (countEl) countEl.textContent = totalCount;
+
+    const unreviewedEl = document.getElementById('lead-stat-unreviewed');
+    if (unreviewedEl && reviewedFilter === 'false') {
+      unreviewedEl.textContent = totalCount;
     }
+    const totalStatEl = document.getElementById('lead-stat-total');
+    if (totalStatEl && (!totalStatEl.dataset.initialized || reviewedFilter === '')) {
+      totalStatEl.textContent = totalCount;
+      totalStatEl.dataset.initialized = 'true';
+    }
+
     renderLeads();
   } catch (err) {
     showToast(`Could not load leads: ${err.message}`, 'error');
   }
+}
+
+// Quick Source Filter handler from chips
+function setSourceFilter(source) {
+  document.querySelectorAll('#source-filter-chips .source-chip').forEach(btn => {
+    if (btn.getAttribute('data-source') === source) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  const select = document.getElementById('lead-source-filter');
+  if (select) {
+    select.value = source;
+  }
+
+  loadLeads();
 }
 
 function renderLeads() {
@@ -677,13 +726,11 @@ async function markLeadReviewed(id) {
   if (reviewFilter === 'false') {
     const cardEl = document.getElementById(`lead-card-${id}`);
     if (cardEl) {
-      cardEl.style.transition = 'all 0.2s ease';
-      cardEl.style.opacity = '0';
-      cardEl.style.transform = 'scale(0.96)';
+      cardEl.classList.add('lead-card-dismissing');
       setTimeout(() => {
         leadsList = leadsList.filter(l => l.id !== id);
         renderLeads();
-      }, 200);
+      }, 240);
     } else {
       leadsList = leadsList.filter(l => l.id !== id);
       renderLeads();
@@ -696,6 +743,10 @@ async function markLeadReviewed(id) {
   const countEl = document.getElementById('count-leads');
   if (countEl && parseInt(countEl.textContent, 10) > 0) {
     countEl.textContent = Math.max(0, parseInt(countEl.textContent, 10) - 1);
+  }
+  const unreviewedStatEl = document.getElementById('lead-stat-unreviewed');
+  if (unreviewedStatEl && parseInt(unreviewedStatEl.textContent, 10) > 0) {
+    unreviewedStatEl.textContent = Math.max(0, parseInt(unreviewedStatEl.textContent, 10) - 1);
   }
 
   try {
@@ -716,13 +767,11 @@ async function unmarkLeadReviewed(id) {
   if (reviewFilter === 'true') {
     const cardEl = document.getElementById(`lead-card-${id}`);
     if (cardEl) {
-      cardEl.style.transition = 'all 0.2s ease';
-      cardEl.style.opacity = '0';
-      cardEl.style.transform = 'scale(0.96)';
+      cardEl.classList.add('lead-card-dismissing');
       setTimeout(() => {
         leadsList = leadsList.filter(l => l.id !== id);
         renderLeads();
-      }, 200);
+      }, 240);
     } else {
       leadsList = leadsList.filter(l => l.id !== id);
       renderLeads();
@@ -735,6 +784,10 @@ async function unmarkLeadReviewed(id) {
   const countEl = document.getElementById('count-leads');
   if (countEl && !isNaN(parseInt(countEl.textContent, 10))) {
     countEl.textContent = parseInt(countEl.textContent, 10) + 1;
+  }
+  const unreviewedStatEl = document.getElementById('lead-stat-unreviewed');
+  if (unreviewedStatEl && !isNaN(parseInt(unreviewedStatEl.textContent, 10))) {
+    unreviewedStatEl.textContent = parseInt(unreviewedStatEl.textContent, 10) + 1;
   }
 
   try {
@@ -789,12 +842,12 @@ function closeApplicationModal() {
   }
 }
 
-function openAddApplicationModal() {
+function openAddApplicationModal(preselectedStatus) {
   document.getElementById('modal-app-title').textContent = 'Track New Application';
   document.getElementById('form-app-id').value = '';
   document.getElementById('form-lead-id').value = '';
   document.getElementById('app-form').reset();
-  document.getElementById('form-status').value = 'applied';
+  document.getElementById('form-status').value = preselectedStatus || 'applied';
   document.getElementById('form-applied-date').value = new Date().toISOString().split('T')[0];
   openApplicationModal();
 }
@@ -1116,8 +1169,57 @@ document.addEventListener('click', (e) => {
 });
 
 // Initial Boot
-document.addEventListener('DOMContentLoaded', () => {
-  loadApplications();
-  loadStats();
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const [statsRes, leadsRes] = await Promise.allSettled([
+      apiFetch('/application-stats'),
+      apiFetch('/leads?limit=1&reviewed=false')
+    ]);
+
+    let totalApps = 0;
+    if (statsRes.status === 'fulfilled' && statsRes.value) {
+      const stats = statsRes.value;
+      totalApps = stats.total || 0;
+      const statTotalEl = document.getElementById('stat-total');
+      if (statTotalEl) statTotalEl.textContent = stats.total || 0;
+      const statAppliedEl = document.getElementById('stat-applied');
+      if (statAppliedEl) statAppliedEl.textContent = stats.applied || 0;
+      const statInterviewingEl = document.getElementById('stat-interviewing');
+      if (statInterviewingEl) statInterviewingEl.textContent = (stats.screening + stats.interviewing) || 0;
+      const statOfferEl = document.getElementById('stat-offer');
+      if (statOfferEl) statOfferEl.textContent = stats.offer || 0;
+      const statRateEl = document.getElementById('stat-rate');
+      if (statRateEl) statRateEl.textContent = `${Math.round(stats.response_rate || 0)}%`;
+      const countAppsEl = document.getElementById('count-applications');
+      if (countAppsEl) countAppsEl.textContent = totalApps;
+      const trackedEl = document.getElementById('lead-stat-tracked');
+      if (trackedEl) trackedEl.textContent = totalApps;
+    }
+
+    let totalUnreviewedLeads = 0;
+    if (leadsRes.status === 'fulfilled' && leadsRes.value) {
+      totalUnreviewedLeads = leadsRes.value.total !== undefined ? leadsRes.value.total : (leadsRes.value.leads?.length || 0);
+      const countLeadsEl = document.getElementById('count-leads');
+      if (countLeadsEl) countLeadsEl.textContent = totalUnreviewedLeads;
+      const unreviewedStatEl = document.getElementById('lead-stat-unreviewed');
+      if (unreviewedStatEl) unreviewedStatEl.textContent = totalUnreviewedLeads;
+      const totalStatEl = document.getElementById('lead-stat-total');
+      if (totalStatEl) totalStatEl.textContent = totalUnreviewedLeads;
+    }
+
+    const savedTab = localStorage.getItem('lead_scanner_active_tab');
+    if (savedTab) {
+      switchTab(savedTab);
+    } else if (totalApps === 0 && totalUnreviewedLeads > 0) {
+      // Default to leads queue when pipeline is empty!
+      switchTab('leads');
+    } else {
+      switchTab('applications');
+    }
+  } catch (err) {
+    console.error('Boot error:', err);
+    switchTab('leads');
+  }
+
   refreshIcons();
 });
