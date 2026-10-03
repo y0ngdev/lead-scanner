@@ -2,6 +2,9 @@
   "mcpServers": {
     "encore-cloud": {
       "serverUrl": "https://api.encore.dev/mcp"
+    },
+    "ui-skills": {
+      "serverUrl": "https://www.ui-skills.com/mcp"
     }
   }
 }
