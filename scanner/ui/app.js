@@ -1,4 +1,5 @@
 // Lead Scanner & Application Pipeline Manager Client Logic
+// Built with UI-Skills & shadcn-html Design Principles
 
 let currentTab = 'applications';
 let currentViewMode = 'kanban';
@@ -65,6 +66,21 @@ function refreshIcons() {
   if (window.lucide && typeof window.lucide.createIcons === 'function') {
     window.lucide.createIcons();
   }
+}
+
+// Normalize source string to a CSS class
+function getSourceClass(source) {
+  const s = (source || '').toLowerCase();
+  if (s.includes('ashby')) return 'ashby';
+  if (s.includes('greenhouse')) return 'greenhouse';
+  if (s.includes('lever')) return 'lever';
+  if (s.includes('workable')) return 'workable';
+  if (s.includes('google') || s.includes('dork')) return 'google-dork';
+  if (s.includes('yc')) return 'yc';
+  if (s.includes('hacker')) return 'hackernews';
+  if (s.includes('wework')) return 'weworkremotely';
+  if (s.includes('reddit')) return 'reddit';
+  return 'manual';
 }
 
 // Navigation & Tab Switching
@@ -215,7 +231,7 @@ function renderKanban() {
     if (grouped[col].length === 0) {
       container.innerHTML = `
         <div class="flex flex-col items-center justify-center p-6 text-center text-muted-foreground/60 border border-dashed border-border/80 rounded-lg">
-          <span class="text-xs">No applications</span>
+          <span class="text-xs">Empty stage</span>
         </div>
       `;
       return;
@@ -228,16 +244,19 @@ function renderKanban() {
 }
 
 function createAppCardHTML(app) {
+  const sourceClass = getSourceClass(app.source);
+  const companyInitial = (app.company || '?').charAt(0).toUpperCase();
+
   const nextStepHTML = app.next_step ? `
-    <div class="tag-pill text-amber-300 border-amber-500/20 bg-amber-500/10" title="Next step">
+    <div class="tag-pill text-amber-300 border-amber-500/25 bg-amber-500/10" title="Next step">
       <i data-lucide="clock" class="w-3 h-3 text-amber-400"></i>
-      <span class="truncate max-w-[120px]">${escapeHTML(app.next_step)}</span>
+      <span class="truncate max-w-[110px]">${escapeHTML(app.next_step)}</span>
       ${app.next_step_date ? `<strong class="text-[10px] opacity-80">${formatDateBadge(app.next_step_date)}</strong>` : ''}
     </div>
   ` : '';
 
   const salaryHTML = app.salary ? `
-    <span class="tag-pill text-emerald-300 border-emerald-500/20 bg-emerald-500/10" title="Salary / Compensation">
+    <span class="tag-pill text-emerald-300 border-emerald-500/25 bg-emerald-500/10" title="Salary / Compensation">
       <i data-lucide="dollar-sign" class="w-3 h-3 text-emerald-400"></i>
       <span>${escapeHTML(app.salary)}</span>
     </span>
@@ -255,17 +274,23 @@ function createAppCardHTML(app) {
   return `
     <div class="app-card" id="card-${app.id}" draggable="true" ondragstart="handleDragStart(event, ${app.id})" ondragend="handleDragEnd(event)">
       <div class="flex items-start justify-between gap-2">
-        <div class="font-semibold text-xs text-foreground tracking-tight truncate">${escapeHTML(app.company)}</div>
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="w-6 h-6 rounded bg-muted/90 border border-border text-foreground font-semibold text-[11px] flex items-center justify-center shrink-0">
+            ${companyInitial}
+          </div>
+          <div class="font-semibold text-xs text-foreground tracking-tight truncate">${escapeHTML(app.company)}</div>
+        </div>
+        
         <div class="flex items-center gap-1 shrink-0">
           ${app.job_url ? `
-            <a href="${escapeHTML(app.job_url)}" target="_blank" rel="noopener noreferrer" class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors" title="Open Job Posting">
+            <a href="${escapeHTML(app.job_url)}" target="_blank" rel="noopener noreferrer" class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors" title="Open Job Posting" aria-label="Open Job Posting">
               <i data-lucide="external-link" class="w-3 h-3"></i>
             </a>
           ` : ''}
-          <button type="button" class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors" onclick="openEditApplicationModal(${app.id})" title="Edit Application">
+          <button type="button" class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors" onclick="openEditApplicationModal(${app.id})" title="Edit Application" aria-label="Edit Application">
             <i data-lucide="edit-3" class="w-3 h-3"></i>
           </button>
-          <button type="button" class="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" onclick="confirmDeleteApplication(${app.id})" title="Delete Application">
+          <button type="button" class="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" onclick="confirmDeleteApplication(${app.id})" title="Delete Application" aria-label="Delete Application">
             <i data-lucide="trash-2" class="w-3 h-3"></i>
           </button>
         </div>
@@ -274,7 +299,7 @@ function createAppCardHTML(app) {
       <div class="text-xs font-medium text-muted-foreground line-clamp-1">${escapeHTML(app.role)}</div>
 
       <div class="flex flex-wrap gap-1.5 items-center">
-        <span class="tag-pill font-mono uppercase text-[9px] tracking-wider">${escapeHTML(app.source || 'manual')}</span>
+        <span class="source-pill ${sourceClass}">${escapeHTML(app.source || 'manual')}</span>
         ${salaryHTML}
         ${locationHTML}
         ${nextStepHTML}
@@ -282,7 +307,7 @@ function createAppCardHTML(app) {
 
       <div class="flex items-center justify-between pt-2 border-t border-border/50 text-[11px] text-muted-foreground">
         <span>${appliedDateStr}</span>
-        <select class="input h-6 text-[11px] py-0 px-2 max-w-[105px] bg-muted/60 border-border" onchange="quickUpdateStatus(${app.id}, this.value)">
+        <select class="input h-6 text-[11px] py-0 px-2 max-w-[105px] bg-muted/70 border-border" onchange="quickUpdateStatus(${app.id}, this.value)" aria-label="Update Stage">
           <option value="wishlist" ${app.status === 'wishlist' ? 'selected' : ''}>Wishlist</option>
           <option value="applied" ${app.status === 'applied' ? 'selected' : ''}>Applied</option>
           <option value="screening" ${app.status === 'screening' ? 'selected' : ''}>Screening</option>
@@ -329,48 +354,51 @@ function renderTable() {
     return;
   }
 
-  tbody.innerHTML = filtered.map(app => `
-    <tr class="hover:bg-muted/30 transition-colors">
-      <td class="py-3 px-4">
-        <div class="font-semibold text-foreground">${escapeHTML(app.company)}</div>
-        <div class="text-muted-foreground text-[11px]">${escapeHTML(app.role)}</div>
-      </td>
-      <td class="py-3 px-4">
-        <span class="status-pill ${app.status}">${escapeHTML(app.status)}</span>
-      </td>
-      <td class="py-3 px-4 text-muted-foreground">
-        <span class="tag-pill font-mono uppercase text-[9px]">${escapeHTML(app.source || 'manual')}</span>
-      </td>
-      <td class="py-3 px-4 text-muted-foreground">
-        ${app.applied_date ? app.applied_date : '<span class="opacity-40">—</span>'}
-      </td>
-      <td class="py-3 px-4 text-muted-foreground">
-        <div>${app.salary ? `💰 ${escapeHTML(app.salary)}` : ''}</div>
-        <div class="text-[11px] opacity-75">${app.location ? `📍 ${escapeHTML(app.location)}` : '—'}</div>
-      </td>
-      <td class="py-3 px-4">
-        ${app.next_step ? `
-          <div class="text-foreground text-[11px] font-medium">${escapeHTML(app.next_step)}</div>
-          ${app.next_step_date ? `<div class="text-amber-400 text-[10px]">📅 ${app.next_step_date}</div>` : ''}
-        ` : '<span class="text-muted-foreground opacity-40">—</span>'}
-      </td>
-      <td class="py-3 px-4 text-right">
-        <div class="flex items-center justify-end gap-1">
-          ${app.job_url ? `
-            <a href="${escapeHTML(app.job_url)}" target="_blank" rel="noopener noreferrer" class="btn" data-variant="ghost" data-size="icon" title="Open Job Posting">
-              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-            </a>
-          ` : ''}
-          <button type="button" class="btn" data-variant="ghost" data-size="icon" onclick="openEditApplicationModal(${app.id})" title="Edit">
-            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-          </button>
-          <button type="button" class="btn text-destructive hover:bg-destructive/10" data-variant="ghost" data-size="icon" onclick="confirmDeleteApplication(${app.id})" title="Delete">
-            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-          </button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = filtered.map(app => {
+    const sourceClass = getSourceClass(app.source);
+    return `
+      <tr class="hover:bg-muted/30 transition-colors">
+        <td class="py-3 px-4">
+          <div class="font-semibold text-foreground">${escapeHTML(app.company)}</div>
+          <div class="text-muted-foreground text-[11px]">${escapeHTML(app.role)}</div>
+        </td>
+        <td class="py-3 px-4">
+          <span class="status-pill ${app.status}">${escapeHTML(app.status)}</span>
+        </td>
+        <td class="py-3 px-4">
+          <span class="source-pill ${sourceClass}">${escapeHTML(app.source || 'manual')}</span>
+        </td>
+        <td class="py-3 px-4 text-muted-foreground tabular-nums">
+          ${app.applied_date ? app.applied_date : '<span class="opacity-40">—</span>'}
+        </td>
+        <td class="py-3 px-4 text-muted-foreground">
+          <div>${app.salary ? `💰 ${escapeHTML(app.salary)}` : ''}</div>
+          <div class="text-[11px] opacity-75">${app.location ? `📍 ${escapeHTML(app.location)}` : '—'}</div>
+        </td>
+        <td class="py-3 px-4">
+          ${app.next_step ? `
+            <div class="text-foreground text-[11px] font-medium">${escapeHTML(app.next_step)}</div>
+            ${app.next_step_date ? `<div class="text-amber-400 text-[10px] tabular-nums">📅 ${app.next_step_date}</div>` : ''}
+          ` : '<span class="text-muted-foreground opacity-40">—</span>'}
+        </td>
+        <td class="py-3 px-4 text-right">
+          <div class="flex items-center justify-end gap-1">
+            ${app.job_url ? `
+              <a href="${escapeHTML(app.job_url)}" target="_blank" rel="noopener noreferrer" class="btn" data-variant="ghost" data-size="icon" title="Open Job Posting" aria-label="Open Job Posting">
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              </a>
+            ` : ''}
+            <button type="button" class="btn" data-variant="ghost" data-size="icon" onclick="openEditApplicationModal(${app.id})" title="Edit" aria-label="Edit">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+            </button>
+            <button type="button" class="btn text-destructive hover:bg-destructive/10" data-variant="ghost" data-size="icon" onclick="confirmDeleteApplication(${app.id})" title="Delete" aria-label="Delete">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 
   refreshIcons();
 }
@@ -499,6 +527,10 @@ function renderLeads() {
         </div>
         <h4 class="text-sm font-semibold text-foreground">No matching leads found</h4>
         <p class="text-xs text-muted-foreground mt-1 max-w-sm">Click "Run Scan" in the header to search job boards and Google Dork for new tech postings.</p>
+        <button type="button" class="btn mt-4" data-variant="outline" data-size="sm" onclick="triggerScan()">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+          <span>Run Scan Now</span>
+        </button>
       </div>
     `;
     refreshIcons();
@@ -507,6 +539,8 @@ function renderLeads() {
 
   container.innerHTML = filtered.map(lead => {
     const isApplied = lead.application_id && lead.application_id > 0;
+    const sourceClass = getSourceClass(lead.source);
+
     return `
       <div class="lead-card ${lead.reviewed ? 'reviewed' : ''}" id="lead-card-${lead.id}">
         <div class="flex flex-col gap-2.5">
@@ -521,7 +555,7 @@ function renderLeads() {
           </div>
 
           <div class="flex flex-wrap items-center gap-1.5">
-            <span class="tag-pill font-mono uppercase text-[9px] text-primary bg-primary/10 border-primary/20">${escapeHTML(lead.source)}</span>
+            <span class="source-pill ${sourceClass}">${escapeHTML(lead.source)}</span>
             <span class="tag-pill text-amber-300 border-amber-500/20 bg-amber-500/10">
               <i data-lucide="key" class="w-2.5 h-2.5 text-amber-400"></i>
               <span>${escapeHTML(lead.matched_keyword)}</span>
@@ -536,9 +570,9 @@ function renderLeads() {
         </div>
 
         <div class="flex items-center justify-between pt-3 border-t border-border/50 text-[11px] text-muted-foreground gap-2">
-          <span>Found ${formatRelative(lead.found_at)}</span>
+          <span class="tabular-nums">Found ${formatRelative(lead.found_at)}</span>
           <div class="flex items-center gap-1.5 flex-wrap justify-end">
-            <a href="${escapeHTML(lead.url)}" target="_blank" rel="noopener noreferrer" class="btn" data-variant="outline" data-size="sm">
+            <a href="${escapeHTML(lead.url)}" target="_blank" rel="noopener noreferrer" class="btn" data-variant="outline" data-size="sm" aria-label="View original job post">
               <span>View Post</span>
               <i data-lucide="external-link" class="w-3 h-3"></i>
             </a>
@@ -546,19 +580,19 @@ function renderLeads() {
             ${isApplied ? `
               <span class="status-pill applied">✓ Applied</span>
             ` : `
-              <button type="button" class="btn" data-variant="default" data-size="sm" onclick="openConvertModal(${lead.id})">
+              <button type="button" class="btn" data-variant="default" data-size="sm" onclick="openConvertModal(${lead.id})" aria-label="Track as application">
                 <i data-lucide="plus" class="w-3 h-3"></i>
                 <span>Track</span>
               </button>
             `}
 
             ${lead.reviewed ? `
-              <button type="button" class="btn" data-variant="secondary" data-size="sm" onclick="unmarkLeadReviewed(${lead.id})" title="Move back to unreviewed queue">
+              <button type="button" class="btn" data-variant="secondary" data-size="sm" onclick="unmarkLeadReviewed(${lead.id})" title="Move back to unreviewed queue" aria-label="Unmark as reviewed">
                 <i data-lucide="undo-2" class="w-3 h-3"></i>
                 <span>Unmark</span>
               </button>
             ` : `
-              <button type="button" class="btn" data-variant="secondary" data-size="sm" onclick="markLeadReviewed(${lead.id})" title="Mark as reviewed">
+              <button type="button" class="btn" data-variant="secondary" data-size="sm" onclick="markLeadReviewed(${lead.id})" title="Mark as reviewed" aria-label="Mark as reviewed">
                 <i data-lucide="check" class="w-3 h-3 text-emerald-400"></i>
                 <span>Reviewed</span>
               </button>
@@ -900,7 +934,7 @@ function renderAnalytics() {
       <div class="flex flex-col gap-1.5">
         <div class="flex items-center justify-between text-xs">
           <span class="font-medium text-foreground">${s.label}</span>
-          <span class="text-muted-foreground font-mono">${count} (${pct}%)</span>
+          <span class="text-muted-foreground font-mono tabular-nums">${count} (${pct}%)</span>
         </div>
         <div class="h-2 w-full bg-muted/60 rounded-full overflow-hidden">
           <div style="width: ${Math.max(pct, 2)}%; background-color: ${s.color};" class="h-full rounded-full transition-all duration-300"></div>
@@ -925,7 +959,7 @@ function renderAnalytics() {
           <div class="text-xs text-muted-foreground">${escapeHTML(a.next_step)}</div>
         </div>
         ${a.next_step_date ? `
-          <span class="tag-pill text-amber-300 border-amber-500/20 bg-amber-500/10 shrink-0">
+          <span class="tag-pill text-amber-300 border-amber-500/20 bg-amber-500/10 shrink-0 tabular-nums">
             <i data-lucide="calendar" class="w-3 h-3 text-amber-400"></i>
             <span>${a.next_step_date}</span>
           </span>
@@ -1035,6 +1069,51 @@ function formatRelative(dateVal) {
   if (diffDays < 30) return `${diffDays}d ago`;
   return date.toLocaleDateString();
 }
+
+// Global Keyboard Shortcuts (Linear / Raycast style)
+document.addEventListener('keydown', (e) => {
+  // Ignore if user is already typing in an input
+  const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+  if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') {
+    if (e.key === 'Escape') {
+      closeApplicationModal();
+      closeSettingsModal();
+    }
+    return;
+  }
+
+  // Press "/" to focus search
+  if (e.key === '/') {
+    e.preventDefault();
+    if (currentTab === 'applications') {
+      const search = document.getElementById('app-search');
+      if (search) search.focus();
+    } else if (currentTab === 'leads') {
+      const search = document.getElementById('lead-search');
+      if (search) search.focus();
+    }
+  }
+
+  // Press "Escape" to close modals
+  if (e.key === 'Escape') {
+    closeApplicationModal();
+    closeSettingsModal();
+  }
+
+  // Press "c" to add application
+  if (e.key === 'c' || e.key === 'C') {
+    e.preventDefault();
+    openAddApplicationModal();
+  }
+});
+
+// Close modals when clicking backdrop
+document.addEventListener('click', (e) => {
+  if (e.target && e.target.classList.contains('modal-backdrop')) {
+    closeApplicationModal();
+    closeSettingsModal();
+  }
+});
 
 // Initial Boot
 document.addEventListener('DOMContentLoaded', () => {

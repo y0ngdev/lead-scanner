@@ -93,57 +93,57 @@
     <!-- KPI Stats Ribbon -->
     <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" aria-label="Pipeline Metrics">
       <!-- Total Applications -->
-      <div class="card p-4 flex items-center gap-3.5">
-        <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
-          <i data-lucide="folder" class="w-5 h-5"></i>
+      <div class="card p-3.5 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
+          <i data-lucide="folder" class="w-4 h-4"></i>
         </div>
         <div>
-          <div class="text-2xl font-bold tracking-tight text-foreground" id="stat-total">0</div>
-          <div class="text-xs text-muted-foreground font-medium">Total Tracked</div>
+          <div class="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">Total Pipeline</div>
+          <div class="text-xl font-bold tracking-tight text-foreground tabular-nums" id="stat-total">0</div>
         </div>
       </div>
 
       <!-- Applied Stage -->
-      <div class="card p-4 flex items-center gap-3.5">
-        <div class="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center shrink-0">
-          <i data-lucide="send" class="w-5 h-5"></i>
+      <div class="card p-3.5 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center shrink-0">
+          <i data-lucide="send" class="w-4 h-4"></i>
         </div>
         <div>
-          <div class="text-2xl font-bold tracking-tight text-foreground" id="stat-applied">0</div>
-          <div class="text-xs text-muted-foreground font-medium">Applications Sent</div>
+          <div class="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">Submitted</div>
+          <div class="text-xl font-bold tracking-tight text-foreground tabular-nums" id="stat-applied">0</div>
         </div>
       </div>
 
       <!-- Interviewing -->
-      <div class="card p-4 flex items-center gap-3.5">
-        <div class="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
-          <i data-lucide="messages-square" class="w-5 h-5"></i>
+      <div class="card p-3.5 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
+          <i data-lucide="messages-square" class="w-4 h-4"></i>
         </div>
         <div>
-          <div class="text-2xl font-bold tracking-tight text-foreground" id="stat-interviewing">0</div>
-          <div class="text-xs text-muted-foreground font-medium">In Interviews</div>
+          <div class="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">In Interview</div>
+          <div class="text-xl font-bold tracking-tight text-foreground tabular-nums" id="stat-interviewing">0</div>
         </div>
       </div>
 
       <!-- Offers -->
-      <div class="card p-4 flex items-center gap-3.5">
-        <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
-          <i data-lucide="trophy" class="w-5 h-5"></i>
+      <div class="card p-3.5 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+          <i data-lucide="trophy" class="w-4 h-4"></i>
         </div>
         <div>
-          <div class="text-2xl font-bold tracking-tight text-foreground" id="stat-offer">0</div>
-          <div class="text-xs text-muted-foreground font-medium">Offers Received</div>
+          <div class="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">Offers</div>
+          <div class="text-xl font-bold tracking-tight text-foreground tabular-nums" id="stat-offer">0</div>
         </div>
       </div>
 
       <!-- Response Rate -->
-      <div class="card p-4 flex items-center gap-3.5 col-span-2 sm:col-span-1">
-        <div class="w-10 h-10 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center shrink-0">
-          <i data-lucide="trending-up" class="w-5 h-5"></i>
+      <div class="card p-3.5 flex items-center gap-3 col-span-2 sm:col-span-1">
+        <div class="w-9 h-9 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center shrink-0">
+          <i data-lucide="trending-up" class="w-4 h-4"></i>
         </div>
         <div>
-          <div class="text-2xl font-bold tracking-tight text-foreground" id="stat-rate">0%</div>
-          <div class="text-xs text-muted-foreground font-medium">Response Rate</div>
+          <div class="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">Response Rate</div>
+          <div class="text-xl font-bold tracking-tight text-foreground tabular-nums" id="stat-rate">0%</div>
         </div>
       </div>
     </section>
@@ -157,7 +157,8 @@
           <!-- Search -->
           <div class="relative flex-1 max-w-sm">
             <i data-lucide="search" class="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-            <input type="text" id="app-search" class="input pl-9 h-9 text-xs w-full" placeholder="Search company, role, keywords..." oninput="handleAppSearch()">
+            <input type="text" id="app-search" class="input pl-9 pr-10 h-9 text-xs w-full" placeholder="Search company, role, keywords..." oninput="handleAppSearch()">
+            <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono text-muted-foreground/60 border border-border/80 rounded bg-muted/40 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">/</kbd>
           </div>
 
           <!-- Status Filter -->
@@ -295,7 +296,8 @@
         <div class="flex flex-1 flex-wrap items-center gap-3">
           <div class="relative flex-1 min-w-[240px] max-w-md">
             <i data-lucide="search" class="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-            <input type="text" id="lead-search" class="input pl-9 h-9 text-xs w-full" placeholder="Search keywords, titles, companies in leads..." oninput="handleLeadSearch()">
+            <input type="text" id="lead-search" class="input pl-9 pr-10 h-9 text-xs w-full" placeholder="Search keywords, titles, companies in leads..." oninput="handleLeadSearch()">
+            <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono text-muted-foreground/60 border border-border/80 rounded bg-muted/40 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">/</kbd>
           </div>
 
           <select id="lead-source-filter" class="input h-9 text-xs max-w-[160px] bg-background" onchange="loadLeads()">
