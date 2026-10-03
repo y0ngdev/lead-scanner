@@ -1,619 +1,585 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lead Scanner & Tech Job Discovery Pipeline</title>
-  <meta name="description" content="Automated tech job discovery across Ashby, Greenhouse, Lever, Workable, Y Combinator, Hacker News, and Reddit.">
-  
-  <!-- Fonts: Outfit (Display) & Inter (Body/Data) -->
+  <title>Lead Scanner — Job Discovery & Pipeline</title>
+  <meta name="description" content="Automated tech job discovery across Ashby, Greenhouse, Lever, Workable, Y Combinator, Hacker News, and Reddit. Track your pipeline in one place.">
+
+  <!-- Fonts: Geist (mono+sans feel), JetBrains Mono for code elements -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
-
-  <!-- shadcn-html Theme & Tokens -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/codylindley/shadcn-html@latest/dist/theme/default-semantic-tokens.css">
-
-  <!-- Tailwind CSS v4 Browser Engine -->
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..700;1,14..32,300..700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- shadcn-html Component Stylesheets -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/codylindley/shadcn-html@latest/dist/components/button/button.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/codylindley/shadcn-html@latest/dist/components/badge/badge.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/codylindley/shadcn-html@latest/dist/components/card/card.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/codylindley/shadcn-html@latest/dist/components/dialog/dialog.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/codylindley/shadcn-html@latest/dist/components/input/input.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/codylindley/shadcn-html@latest/dist/components/table/table.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/codylindley/shadcn-html@latest/dist/components/tabs/tabs.css">
-
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="antialiased min-h-screen flex flex-col font-sans">
+<body>
 
-  <!-- App Header -->
-  <header class="app-header">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
-      
-      <!-- Brand Logo & Live Radar Status -->
-      <div class="flex items-center gap-3 shrink-0">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-sm shrink-0">
-          <i data-lucide="radar" class="w-5 h-5"></i>
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-sm sm:text-base font-bold tracking-tight text-white font-display">Lead Scanner</h1>
-            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>7 Sources Live</span>
-            </span>
-          </div>
-          <p class="text-[11px] text-slate-400 hidden md:block">Ashby • Greenhouse • Lever • Workable • YC • Reddit</p>
-        </div>
-      </div>
+  <!-- =============================================
+       HEADER
+       ============================================= -->
+  <header class="app-header" role="banner">
+    <div class="header-inner">
 
-      <!-- Navigation Tabs (Center Segmented Control) -->
-      <nav class="flex items-center bg-slate-900/90 p-1 rounded-xl border border-white/10 shadow-inner" aria-label="Main Navigation">
-        <button class="nav-tab" id="tab-leads" onclick="switchTab('leads')">
-          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-400"></i>
-          <span>Discovered Leads</span>
-          <span class="tab-count-pill" id="count-leads">0</span>
+      <!-- Brand -->
+      <a class="brand" href="#" aria-label="Lead Scanner home">
+        <div class="brand-icon" aria-hidden="true">
+          <i data-lucide="radar" style="width:14px;height:14px;"></i>
+        </div>
+        <span class="brand-name">Lead Scanner</span>
+        <span class="live-badge" aria-label="7 sources live">
+          <span class="live-dot" aria-hidden="true"></span>
+          7 live
+        </span>
+      </a>
+
+      <!-- Navigation -->
+      <nav class="header-nav" role="navigation" aria-label="Main navigation">
+        <button class="nav-btn" id="tab-leads" onclick="switchTab('leads')" aria-current="false">
+          <i data-lucide="inbox" aria-hidden="true"></i>
+          <span>Leads</span>
+          <span class="nav-count" id="count-leads" aria-label="leads count">0</span>
         </button>
-        <button class="nav-tab active" id="tab-applications" onclick="switchTab('applications')">
-          <i data-lucide="kanban" class="w-3.5 h-3.5"></i>
+        <button class="nav-btn active" id="tab-applications" onclick="switchTab('applications')" aria-current="page">
+          <i data-lucide="kanban" aria-hidden="true"></i>
           <span>Pipeline</span>
-          <span class="tab-count-pill" id="count-applications">0</span>
+          <span class="nav-count" id="count-applications" aria-label="applications count">0</span>
         </button>
-        <button class="nav-tab" id="tab-analytics" onclick="switchTab('analytics')">
-          <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>
+        <button class="nav-btn" id="tab-analytics" onclick="switchTab('analytics')" aria-current="false">
+          <i data-lucide="bar-chart-2" aria-hidden="true"></i>
           <span>Insights</span>
         </button>
       </nav>
 
-      <!-- Action Cluster (Right) -->
-      <div class="flex items-center gap-2 shrink-0">
-        <button class="btn" data-variant="outline" data-size="sm" id="btn-run-scan" onclick="triggerScan()" title="Trigger live search across job boards and Google Dork">
-          <span id="scan-icon" class="inline-flex items-center"><i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-indigo-400"></i></span>
-          <span id="scan-text" class="text-xs font-semibold">Run Scan</span>
+      <!-- Actions -->
+      <div class="header-actions" role="toolbar" aria-label="Header actions">
+        <button class="btn-outline btn-sm" id="btn-run-scan" onclick="triggerScan()" aria-label="Run scan to discover new job leads">
+          <span id="scan-icon" aria-hidden="true"><i data-lucide="refresh-cw" style="width:13px;height:13px;"></i></span>
+          <span id="scan-text">Scan</span>
         </button>
-        <button class="btn" data-variant="default" data-size="sm" onclick="openAddApplicationModal()">
-          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-          <span class="text-xs font-semibold">Add Application</span>
+        <button class="btn-primary btn-sm" onclick="openAddApplicationModal()" aria-label="Add a new application to track">
+          <i data-lucide="plus" style="width:13px;height:13px;" aria-hidden="true"></i>
+          Add
         </button>
-        <button class="btn" data-variant="ghost" data-size="icon" onclick="openSettingsModal()" title="API Settings" aria-label="Settings">
-          <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i>
+        <button class="icon-btn" onclick="openSettingsModal()" aria-label="Open settings" title="Settings">
+          <i data-lucide="settings-2" style="width:15px;height:15px;" aria-hidden="true"></i>
         </button>
       </div>
 
     </div>
   </header>
 
-  <!-- Main Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col gap-5">
+  <!-- =============================================
+       MAIN
+       ============================================= -->
+  <main class="page-main" role="main">
 
-    <!-- VIEW 1: Leads Discovery Queue (The Feed) -->
-    <div id="view-leads" class="view-panel flex flex-col gap-4" style="display: none;">
-      
-      <!-- Leads Intelligence Ribbon -->
-      <section class="leads-intel-bar grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div class="intel-stat-card">
-          <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Discovered</div>
-          <div class="flex items-baseline gap-2 mt-0.5">
-            <span class="text-xl sm:text-2xl font-bold text-white tabular-nums" id="lead-stat-total">0</span>
-            <span class="text-[11px] text-emerald-400 font-medium">Auto-Synced</span>
-          </div>
-        </div>
-        <div class="intel-stat-card">
-          <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Unreviewed Queue</div>
-          <div class="flex items-baseline gap-2 mt-0.5">
-            <span class="text-xl sm:text-2xl font-bold text-indigo-400 tabular-nums" id="lead-stat-unreviewed">0</span>
-            <span class="text-[11px] text-slate-400">Ready to Triage</span>
-          </div>
-        </div>
-        <div class="intel-stat-card">
-          <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Converted to Pipeline</div>
-          <div class="flex items-baseline gap-2 mt-0.5">
-            <span class="text-xl sm:text-2xl font-bold text-white tabular-nums" id="lead-stat-tracked">0</span>
-            <span class="text-[11px] text-slate-400">Tracked Jobs</span>
-          </div>
-        </div>
-        <div class="intel-stat-card">
-          <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Monitored Sources</div>
-          <div class="flex items-baseline gap-1.5 mt-0.5">
-            <span class="text-xl sm:text-2xl font-bold text-white tabular-nums">7</span>
-            <span class="text-[11px] text-slate-400">Platforms Active</span>
-          </div>
-        </div>
-      </section>
+    <!-- ==========================================
+         VIEW: LEADS QUEUE
+         ========================================== -->
+    <section id="view-leads" class="view" style="display:none;" aria-label="Discovered leads">
 
-      <!-- Leads Filter Toolbar -->
-      <div class="flex flex-col gap-3 bg-slate-900/60 p-3 sm:p-3.5 rounded-2xl border border-white/10 shadow-sm">
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          
-          <div class="flex flex-1 flex-wrap items-center gap-2.5">
-            <!-- Search -->
-            <div class="relative flex-1 min-w-[240px] max-w-md">
-              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-              <input type="text" id="lead-search" class="input pl-9 pr-10 h-8 text-xs w-full" placeholder="Search keywords, roles, companies in leads..." oninput="handleLeadSearch()">
-              <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono text-slate-400 border border-white/10 rounded bg-white/5 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">/</kbd>
-            </div>
-
-            <!-- Review Filter (Segmented) -->
-            <div class="flex items-center bg-slate-950/80 p-0.5 rounded-lg border border-white/10 text-xs">
-              <select id="lead-review-filter" class="input h-7 text-xs bg-transparent border-0 px-2 py-0 cursor-pointer" onchange="loadLeads()" aria-label="Filter reviewed status">
-                <option value="false">Unreviewed Only</option>
-                <option value="true">Reviewed Only</option>
-                <option value="">All Leads</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2 shrink-0">
-            <button class="btn" data-variant="outline" data-size="sm" onclick="loadLeads()" title="Refresh Leads Queue">
-              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-indigo-400"></i>
-              <span>Refresh</span>
-            </button>
-          </div>
+      <!-- Stats bar -->
+      <div class="stats-bar" role="region" aria-label="Lead statistics">
+        <div class="stat">
+          <span class="stat-value tabular" id="lead-stat-total">0</span>
+          <span class="stat-label">Total found</span>
         </div>
-
-        <!-- Quick Source Chips -->
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 text-xs border-t border-white/5 scrollbar-none" id="source-filter-chips">
-          <span class="text-[11px] font-medium text-slate-400 mr-1 shrink-0">Filter by Source:</span>
-          <button type="button" class="source-chip active" data-source="" onclick="setSourceFilter('')">All Sources</button>
-          <button type="button" class="source-chip" data-source="ashby" onclick="setSourceFilter('ashby')">Ashby</button>
-          <button type="button" class="source-chip" data-source="greenhouse" onclick="setSourceFilter('greenhouse')">Greenhouse</button>
-          <button type="button" class="source-chip" data-source="lever" onclick="setSourceFilter('lever')">Lever</button>
-          <button type="button" class="source-chip" data-source="workable" onclick="setSourceFilter('workable')">Workable</button>
-          <button type="button" class="source-chip" data-source="yc" onclick="setSourceFilter('yc')">Y Combinator</button>
-          <button type="button" class="source-chip" data-source="hackernews" onclick="setSourceFilter('hackernews')">Hacker News</button>
-          <button type="button" class="source-chip" data-source="reddit" onclick="setSourceFilter('reddit')">Reddit</button>
-          <button type="button" class="source-chip" data-source="google-dork" onclick="setSourceFilter('google-dork')">Google Dork</button>
-          <!-- Hidden fallback select for compatibility -->
-          <select id="lead-source-filter" class="hidden" onchange="loadLeads()"><option value="">All</option></select>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat">
+          <span class="stat-value tabular accent" id="lead-stat-unreviewed">0</span>
+          <span class="stat-label">Unreviewed</span>
+        </div>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat">
+          <span class="stat-value tabular" id="lead-stat-tracked">0</span>
+          <span class="stat-label">Converted</span>
+        </div>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat">
+          <span class="stat-value tabular">7</span>
+          <span class="stat-label">Sources</span>
         </div>
       </div>
 
-      <!-- Leads Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5" id="leads-container">
-        <!-- populated by JS -->
-      </div>
-
-    </div>
-
-    <!-- VIEW 2: Applications Pipeline (The Tracker) -->
-    <div id="view-applications" class="view-panel flex flex-col gap-4">
-      
-      <!-- Pipeline KPI Metrics Strip -->
-      <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" aria-label="Pipeline Metrics">
-        <!-- Total Pipeline -->
-        <div class="metric-card">
-          <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
-            <i data-lucide="folder" class="w-4 h-4"></i>
-          </div>
-          <div class="min-w-0">
-            <div class="text-[10px] uppercase font-semibold tracking-wider text-slate-400 truncate">Total Tracked</div>
-            <div class="text-lg sm:text-xl font-bold tracking-tight text-white tabular-nums" id="stat-total">0</div>
-          </div>
+      <!-- Toolbar -->
+      <div class="toolbar-row" role="search">
+        <!-- Search -->
+        <div class="search-field">
+          <i data-lucide="search" class="search-icon" aria-hidden="true"></i>
+          <input
+            type="search"
+            id="lead-search"
+            class="search-input"
+            placeholder="Search leads…"
+            oninput="handleLeadSearch()"
+            aria-label="Search leads by keyword, role, or company"
+          >
         </div>
 
-        <!-- Applied -->
-        <div class="metric-card">
-          <div class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center shrink-0">
-            <i data-lucide="send" class="w-4 h-4"></i>
-          </div>
-          <div class="min-w-0">
-            <div class="text-[10px] uppercase font-semibold tracking-wider text-slate-400 truncate">Submitted</div>
-            <div class="text-lg sm:text-xl font-bold tracking-tight text-white tabular-nums" id="stat-applied">0</div>
-          </div>
-        </div>
+        <!-- Review filter -->
+        <select
+          id="lead-review-filter"
+          class="select-field"
+          onchange="loadLeads()"
+          aria-label="Filter by review status"
+        >
+          <option value="false">Unreviewed</option>
+          <option value="true">Reviewed</option>
+          <option value="">All leads</option>
+        </select>
 
-        <!-- In Interview -->
-        <div class="metric-card">
-          <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
-            <i data-lucide="messages-square" class="w-4 h-4"></i>
-          </div>
-          <div class="min-w-0">
-            <div class="text-[10px] uppercase font-semibold tracking-wider text-slate-400 truncate">In Interviews</div>
-            <div class="text-lg sm:text-xl font-bold tracking-tight text-white tabular-nums" id="stat-interviewing">0</div>
-          </div>
-        </div>
-
-        <!-- Offers -->
-        <div class="metric-card">
-          <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
-            <i data-lucide="trophy" class="w-4 h-4"></i>
-          </div>
-          <div class="min-w-0">
-            <div class="text-[10px] uppercase font-semibold tracking-wider text-slate-400 truncate">Offers Received</div>
-            <div class="text-lg sm:text-xl font-bold tracking-tight text-white tabular-nums" id="stat-offer">0</div>
-          </div>
-        </div>
-
-        <!-- Response Rate -->
-        <div class="metric-card col-span-2 sm:col-span-1">
-          <div class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center shrink-0">
-            <i data-lucide="trending-up" class="w-4 h-4"></i>
-          </div>
-          <div class="min-w-0">
-            <div class="text-[10px] uppercase font-semibold tracking-wider text-slate-400 truncate">Response Rate</div>
-            <div class="text-lg sm:text-xl font-bold tracking-tight text-white tabular-nums" id="stat-rate">0%</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Empty Pipeline Callout Banner (shown when 0 applications) -->
-      <div id="pipeline-empty-banner" class="p-5 sm:p-6 rounded-2xl border border-indigo-500/25 bg-gradient-to-r from-indigo-950/40 via-purple-950/20 to-slate-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg">
-        <div class="flex items-center gap-3.5">
-          <div class="w-11 h-11 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
-            <i data-lucide="sparkles" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h3 class="text-sm font-semibold text-white">Your Job Pipeline is Ready</h3>
-            <p class="text-xs text-slate-300 mt-0.5 leading-relaxed">
-              Explore discovered job leads from Ashby, Greenhouse, Lever, YC & Reddit, or add your current applications manually.
-            </p>
-          </div>
-        </div>
-        <div class="flex items-center gap-2 shrink-0">
-          <button class="btn" data-variant="default" data-size="sm" onclick="switchTab('leads')">
-            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-            <span>Browse Leads Queue</span>
-          </button>
-          <button class="btn" data-variant="outline" data-size="sm" onclick="openAddApplicationModal()">
-            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-            <span>Add Application</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Applications Toolbar -->
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-900/50 p-2.5 rounded-xl border border-white/10">
-        <div class="flex flex-1 items-center gap-2.5">
-          <!-- Search -->
-          <div class="relative flex-1 max-w-sm">
-            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-            <input type="text" id="app-search" class="input pl-9 pr-10 h-8 text-xs w-full" placeholder="Search company, role, keywords..." oninput="handleAppSearch()">
-            <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono text-slate-400 border border-white/10 rounded bg-white/5 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">/</kbd>
-          </div>
-
-          <!-- Status Filter -->
-          <select id="app-status-filter" class="input h-8 text-xs max-w-[150px] bg-slate-900" onchange="handleAppFilter()" aria-label="Filter by stage">
-            <option value="all">All Stages</option>
-            <option value="wishlist">📌 Wishlist</option>
-            <option value="applied">📤 Applied</option>
-            <option value="screening">📞 Screening</option>
-            <option value="interviewing">💻 Interviewing</option>
-            <option value="offer">🎉 Offer</option>
-            <option value="rejected">❌ Closed</option>
-          </select>
-        </div>
-
-        <!-- View Mode Switcher -->
-        <div class="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-lg border border-white/10">
-          <button class="px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 active bg-slate-800 text-white shadow-xs" id="mode-kanban" onclick="setViewMode('kanban')">
-            <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
-            <span>Kanban</span>
-          </button>
-          <button class="px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 text-slate-400 hover:text-white" id="mode-table" onclick="setViewMode('table')">
-            <i data-lucide="list" class="w-3.5 h-3.5"></i>
-            <span>Table</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Kanban Board -->
-      <div id="kanban-view" class="kanban-grid items-start">
-        
-        <!-- 1. Wishlist -->
-        <div class="kanban-col" data-status="wishlist" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'wishlist')">
-          <div class="kanban-col-header">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-              <span class="text-xs font-semibold text-white">Wishlist</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="badge" data-variant="secondary" id="badge-wishlist">0</span>
-              <button type="button" class="btn-col-add" onclick="openAddApplicationModal('wishlist')" title="Add to Wishlist" aria-label="Add to Wishlist">
-                <i data-lucide="plus" class="w-3 h-3"></i>
-              </button>
-            </div>
-          </div>
-          <div class="kanban-col-cards" id="cards-wishlist"></div>
-        </div>
-
-        <!-- 2. Applied -->
-        <div class="kanban-col" data-status="applied" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'applied')">
-          <div class="kanban-col-header">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-blue-400"></span>
-              <span class="text-xs font-semibold text-white">Applied</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="badge" data-variant="secondary" id="badge-applied">0</span>
-              <button type="button" class="btn-col-add" onclick="openAddApplicationModal('applied')" title="Add to Applied" aria-label="Add to Applied">
-                <i data-lucide="plus" class="w-3 h-3"></i>
-              </button>
-            </div>
-          </div>
-          <div class="kanban-col-cards" id="cards-applied"></div>
-        </div>
-
-        <!-- 3. Screening -->
-        <div class="kanban-col" data-status="screening" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'screening')">
-          <div class="kanban-col-header">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-              <span class="text-xs font-semibold text-white">Screening</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="badge" data-variant="secondary" id="badge-screening">0</span>
-              <button type="button" class="btn-col-add" onclick="openAddApplicationModal('screening')" title="Add to Screening" aria-label="Add to Screening">
-                <i data-lucide="plus" class="w-3 h-3"></i>
-              </button>
-            </div>
-          </div>
-          <div class="kanban-col-cards" id="cards-screening"></div>
-        </div>
-
-        <!-- 4. Interviewing -->
-        <div class="kanban-col" data-status="interviewing" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'interviewing')">
-          <div class="kanban-col-header">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-purple-400"></span>
-              <span class="text-xs font-semibold text-white">Interviewing</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="badge" data-variant="secondary" id="badge-interviewing">0</span>
-              <button type="button" class="btn-col-add" onclick="openAddApplicationModal('interviewing')" title="Add to Interviewing" aria-label="Add to Interviewing">
-                <i data-lucide="plus" class="w-3 h-3"></i>
-              </button>
-            </div>
-          </div>
-          <div class="kanban-col-cards" id="cards-interviewing"></div>
-        </div>
-
-        <!-- 5. Offer -->
-        <div class="kanban-col" data-status="offer" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'offer')">
-          <div class="kanban-col-header">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-              <span class="text-xs font-semibold text-white">Offer</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="badge" data-variant="secondary" id="badge-offer">0</span>
-              <button type="button" class="btn-col-add" onclick="openAddApplicationModal('offer')" title="Add to Offer" aria-label="Add to Offer">
-                <i data-lucide="plus" class="w-3 h-3"></i>
-              </button>
-            </div>
-          </div>
-          <div class="kanban-col-cards" id="cards-offer"></div>
-        </div>
-
-        <!-- 6. Rejected / Closed -->
-        <div class="kanban-col" data-status="rejected" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'rejected')">
-          <div class="kanban-col-header">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-rose-400"></span>
-              <span class="text-xs font-semibold text-white">Closed</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="badge" data-variant="secondary" id="badge-rejected">0</span>
-              <button type="button" class="btn-col-add" onclick="openAddApplicationModal('rejected')" title="Add to Closed" aria-label="Add to Closed">
-                <i data-lucide="plus" class="w-3 h-3"></i>
-              </button>
-            </div>
-          </div>
-          <div class="kanban-col-cards" id="cards-rejected"></div>
-        </div>
-
-      </div>
-
-      <!-- Table View -->
-      <div id="table-view" class="card overflow-hidden" style="display: none;">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr class="border-b border-white/10 bg-slate-900/80 text-slate-400 font-medium">
-                <th class="py-3 px-4 font-semibold">Company & Role</th>
-                <th class="py-3 px-4 font-semibold">Stage</th>
-                <th class="py-3 px-4 font-semibold">Source</th>
-                <th class="py-3 px-4 font-semibold">Applied Date</th>
-                <th class="py-3 px-4 font-semibold">Location / Comp</th>
-                <th class="py-3 px-4 font-semibold">Next Step</th>
-                <th class="py-3 px-4 font-semibold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="applications-table-body" class="divide-y divide-white/5">
-              <!-- populated by JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- VIEW 3: Analytics & Pipeline Insights -->
-    <div id="view-analytics" class="view-panel flex flex-col gap-6" style="display: none;">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <!-- Pipeline Funnel -->
-        <div class="card p-5 flex flex-col gap-4">
-          <div class="flex items-center justify-between border-b border-white/10 pb-3">
-            <div class="flex items-center gap-2">
-              <i data-lucide="git-pull-request" class="w-4 h-4 text-indigo-400"></i>
-              <h3 class="text-sm font-semibold text-white">Application Conversion Funnel</h3>
-            </div>
-            <span class="text-xs text-slate-400">Progression by Stage</span>
-          </div>
-          <div id="funnel-container" class="flex flex-col gap-3">
-            <!-- populated by JS -->
-          </div>
-        </div>
-
-        <!-- Upcoming Next Steps & Reminders -->
-        <div class="card p-5 flex flex-col gap-4">
-          <div class="flex items-center justify-between border-b border-white/10 pb-3">
-            <div class="flex items-center gap-2">
-              <i data-lucide="calendar" class="w-4 h-4 text-purple-400"></i>
-              <h3 class="text-sm font-semibold text-white">Upcoming Next Steps & Milestones</h3>
-            </div>
-            <span class="text-xs text-slate-400">Action Items</span>
-          </div>
-          <div id="upcoming-reminders-container" class="flex flex-col gap-2.5">
-            <!-- populated by JS -->
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-  </main>
-
-  <!-- MODAL: Add / Edit Application -->
-  <div class="modal-backdrop" id="application-modal" style="display: none;">
-    <div class="modal-card">
-      <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
-        <div class="flex items-center gap-2.5">
-          <i data-lucide="file-plus" class="w-4 h-4 text-indigo-400"></i>
-          <h3 class="text-sm font-semibold text-white" id="modal-app-title">Track Application</h3>
-        </div>
-        <button type="button" class="btn" data-variant="ghost" data-size="icon" onclick="closeApplicationModal()" aria-label="Close">
-          <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
+        <!-- Refresh -->
+        <button class="btn-ghost btn-sm" onclick="loadLeads()" aria-label="Refresh leads list">
+          <i data-lucide="rotate-ccw" style="width:13px;height:13px;" aria-hidden="true"></i>
+          Refresh
         </button>
       </div>
 
-      <form id="app-form" onsubmit="handleSaveApplication(event)" class="p-6 flex flex-col gap-4">
+      <!-- Source chips -->
+      <div class="chips-row" role="group" aria-label="Filter by source">
+        <span class="chips-label" aria-hidden="true">Source</span>
+        <button class="chip active" data-source="" onclick="setSourceFilter('')" aria-pressed="true">All</button>
+        <button class="chip" data-source="ashby" onclick="setSourceFilter('ashby')" aria-pressed="false">Ashby</button>
+        <button class="chip" data-source="greenhouse" onclick="setSourceFilter('greenhouse')" aria-pressed="false">Greenhouse</button>
+        <button class="chip" data-source="lever" onclick="setSourceFilter('lever')" aria-pressed="false">Lever</button>
+        <button class="chip" data-source="workable" onclick="setSourceFilter('workable')" aria-pressed="false">Workable</button>
+        <button class="chip" data-source="yc" onclick="setSourceFilter('yc')" aria-pressed="false">YC</button>
+        <button class="chip" data-source="hackernews" onclick="setSourceFilter('hackernews')" aria-pressed="false">HN</button>
+        <button class="chip" data-source="reddit" onclick="setSourceFilter('reddit')" aria-pressed="false">Reddit</button>
+        <button class="chip" data-source="google-dork" onclick="setSourceFilter('google-dork')" aria-pressed="false">Dork</button>
+        <!-- hidden compat select -->
+        <select id="lead-source-filter" class="sr-only" onchange="loadLeads()" aria-label="Source filter (hidden)"><option value="">All</option></select>
+      </div>
+
+      <!-- Leads grid -->
+      <div id="leads-container" class="leads-grid" role="list" aria-label="Leads list" aria-live="polite">
+        <!-- populated by JS -->
+      </div>
+
+    </section>
+
+    <!-- ==========================================
+         VIEW: PIPELINE (APPLICATIONS)
+         ========================================== -->
+    <section id="view-applications" class="view" aria-label="Application pipeline">
+
+      <!-- Pipeline stats strip -->
+      <div class="pipeline-stats" role="region" aria-label="Pipeline statistics">
+        <div class="pipeline-stat">
+          <div class="ps-value tabular" id="stat-total">0</div>
+          <div class="ps-label">Tracked</div>
+        </div>
+        <div class="pipeline-stat">
+          <div class="ps-value tabular" id="stat-applied">0</div>
+          <div class="ps-label">Applied</div>
+        </div>
+        <div class="pipeline-stat">
+          <div class="ps-value tabular amber" id="stat-interviewing">0</div>
+          <div class="ps-label">Interviewing</div>
+        </div>
+        <div class="pipeline-stat">
+          <div class="ps-value tabular green" id="stat-offer">0</div>
+          <div class="ps-label">Offers</div>
+        </div>
+        <div class="pipeline-stat">
+          <div class="ps-value tabular" id="stat-rate">0%</div>
+          <div class="ps-label">Response</div>
+        </div>
+      </div>
+
+      <!-- Empty banner (hidden once data loads) -->
+      <div id="pipeline-empty-banner" class="empty-banner" style="display:none;" role="complementary" aria-label="Empty pipeline guidance">
+        <div class="empty-banner-content">
+          <div class="empty-banner-icon" aria-hidden="true">
+            <i data-lucide="inbox" style="width:18px;height:18px;"></i>
+          </div>
+          <div>
+            <h3 class="empty-banner-title">Your pipeline is empty</h3>
+            <p class="empty-banner-body">Discover leads from 7 sources, or add an application you've already submitted.</p>
+          </div>
+        </div>
+        <div class="empty-banner-actions">
+          <button class="btn-outline btn-sm" onclick="switchTab('leads')">
+            <i data-lucide="inbox" style="width:13px;height:13px;" aria-hidden="true"></i>
+            Browse Leads
+          </button>
+          <button class="btn-primary btn-sm" onclick="openAddApplicationModal()">
+            <i data-lucide="plus" style="width:13px;height:13px;" aria-hidden="true"></i>
+            Add Application
+          </button>
+        </div>
+      </div>
+
+      <!-- Pipeline toolbar -->
+      <div class="toolbar-row">
+        <div class="search-field">
+          <i data-lucide="search" class="search-icon" aria-hidden="true"></i>
+          <input
+            type="search"
+            id="app-search"
+            class="search-input"
+            placeholder="Search pipeline…"
+            oninput="handleAppSearch()"
+            aria-label="Search applications by company, role, or keyword"
+          >
+        </div>
+
+        <select id="app-status-filter" class="select-field" onchange="handleAppFilter()" aria-label="Filter by stage">
+          <option value="all">All stages</option>
+          <option value="wishlist">Wishlist</option>
+          <option value="applied">Applied</option>
+          <option value="screening">Screening</option>
+          <option value="interviewing">Interviewing</option>
+          <option value="offer">Offer</option>
+          <option value="rejected">Closed</option>
+        </select>
+
+        <!-- View toggle -->
+        <div class="view-toggle" role="group" aria-label="Switch view mode">
+          <button class="toggle-btn active" id="mode-kanban" onclick="setViewMode('kanban')" aria-pressed="true" aria-label="Kanban view">
+            <i data-lucide="layout-grid" style="width:13px;height:13px;" aria-hidden="true"></i>
+            Board
+          </button>
+          <button class="toggle-btn" id="mode-table" onclick="setViewMode('table')" aria-pressed="false" aria-label="Table view">
+            <i data-lucide="rows-3" style="width:13px;height:13px;" aria-hidden="true"></i>
+            List
+          </button>
+        </div>
+      </div>
+
+      <!-- Kanban board -->
+      <div id="kanban-view" class="kanban-scroll" role="region" aria-label="Kanban board">
+        <div class="kanban-board">
+
+          <div class="k-col" data-status="wishlist" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event,'wishlist')">
+            <div class="k-col-head">
+              <div class="k-col-title">
+                <span class="k-dot" style="background:#f59e0b;" aria-hidden="true"></span>
+                Wishlist
+              </div>
+              <div class="k-col-meta">
+                <span class="k-count" id="badge-wishlist" aria-label="Wishlist count">0</span>
+                <button class="k-add-btn" onclick="openAddApplicationModal('wishlist')" aria-label="Add to Wishlist">
+                  <i data-lucide="plus" style="width:11px;height:11px;" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+            <div class="k-col-body" id="cards-wishlist" role="list" aria-label="Wishlist applications"></div>
+          </div>
+
+          <div class="k-col" data-status="applied" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event,'applied')">
+            <div class="k-col-head">
+              <div class="k-col-title">
+                <span class="k-dot" style="background:#60a5fa;" aria-hidden="true"></span>
+                Applied
+              </div>
+              <div class="k-col-meta">
+                <span class="k-count" id="badge-applied" aria-label="Applied count">0</span>
+                <button class="k-add-btn" onclick="openAddApplicationModal('applied')" aria-label="Add to Applied">
+                  <i data-lucide="plus" style="width:11px;height:11px;" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+            <div class="k-col-body" id="cards-applied" role="list" aria-label="Applied applications"></div>
+          </div>
+
+          <div class="k-col" data-status="screening" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event,'screening')">
+            <div class="k-col-head">
+              <div class="k-col-title">
+                <span class="k-dot" style="background:#22d3ee;" aria-hidden="true"></span>
+                Screening
+              </div>
+              <div class="k-col-meta">
+                <span class="k-count" id="badge-screening" aria-label="Screening count">0</span>
+                <button class="k-add-btn" onclick="openAddApplicationModal('screening')" aria-label="Add to Screening">
+                  <i data-lucide="plus" style="width:11px;height:11px;" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+            <div class="k-col-body" id="cards-screening" role="list" aria-label="Screening applications"></div>
+          </div>
+
+          <div class="k-col" data-status="interviewing" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event,'interviewing')">
+            <div class="k-col-head">
+              <div class="k-col-title">
+                <span class="k-dot" style="background:#a78bfa;" aria-hidden="true"></span>
+                Interviewing
+              </div>
+              <div class="k-col-meta">
+                <span class="k-count" id="badge-interviewing" aria-label="Interviewing count">0</span>
+                <button class="k-add-btn" onclick="openAddApplicationModal('interviewing')" aria-label="Add to Interviewing">
+                  <i data-lucide="plus" style="width:11px;height:11px;" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+            <div class="k-col-body" id="cards-interviewing" role="list" aria-label="Interviewing applications"></div>
+          </div>
+
+          <div class="k-col" data-status="offer" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event,'offer')">
+            <div class="k-col-head">
+              <div class="k-col-title">
+                <span class="k-dot" style="background:#34d399;" aria-hidden="true"></span>
+                Offer
+              </div>
+              <div class="k-col-meta">
+                <span class="k-count" id="badge-offer" aria-label="Offer count">0</span>
+                <button class="k-add-btn" onclick="openAddApplicationModal('offer')" aria-label="Add to Offer">
+                  <i data-lucide="plus" style="width:11px;height:11px;" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+            <div class="k-col-body" id="cards-offer" role="list" aria-label="Offer applications"></div>
+          </div>
+
+          <div class="k-col" data-status="rejected" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event,'rejected')">
+            <div class="k-col-head">
+              <div class="k-col-title">
+                <span class="k-dot" style="background:#6b7280;" aria-hidden="true"></span>
+                Closed
+              </div>
+              <div class="k-col-meta">
+                <span class="k-count" id="badge-rejected" aria-label="Closed count">0</span>
+                <button class="k-add-btn" onclick="openAddApplicationModal('rejected')" aria-label="Add to Closed">
+                  <i data-lucide="plus" style="width:11px;height:11px;" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+            <div class="k-col-body" id="cards-rejected" role="list" aria-label="Closed applications"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Table view -->
+      <div id="table-view" class="table-wrap" role="region" aria-label="Application table" style="display:none;">
+        <table class="data-table" aria-label="Applications list">
+          <thead>
+            <tr>
+              <th scope="col">Company &amp; Role</th>
+              <th scope="col">Stage</th>
+              <th scope="col">Source</th>
+              <th scope="col">Applied</th>
+              <th scope="col">Location</th>
+              <th scope="col">Next step</th>
+              <th scope="col" style="text-align:right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="applications-table-body">
+            <!-- populated by JS -->
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ==========================================
+         VIEW: ANALYTICS
+         ========================================== -->
+    <section id="view-analytics" class="view" style="display:none;" aria-label="Pipeline analytics">
+      <div class="analytics-grid">
+
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">
+              <i data-lucide="triangle-right" style="width:14px;height:14px;color:var(--accent);" aria-hidden="true"></i>
+              Conversion Funnel
+            </div>
+            <span class="panel-sub">By stage</span>
+          </div>
+          <div class="panel-body" id="funnel-container" role="list" aria-label="Funnel stages">
+            <!-- populated by JS -->
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">
+              <i data-lucide="calendar-clock" style="width:14px;height:14px;color:var(--accent);" aria-hidden="true"></i>
+              Upcoming Actions
+            </div>
+            <span class="panel-sub">Next steps</span>
+          </div>
+          <div class="panel-body" id="upcoming-reminders-container" role="list" aria-label="Upcoming reminders">
+            <!-- populated by JS -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =============================================
+       MODAL: Add / Edit Application
+       ============================================= -->
+  <div class="modal-backdrop" id="application-modal" role="dialog" aria-modal="true" aria-labelledby="modal-app-title" style="display:none;">
+    <div class="modal" role="document">
+      <div class="modal-head">
+        <div class="modal-title" id="modal-app-title">
+          <div class="modal-icon" aria-hidden="true">
+            <i data-lucide="file-plus-2" style="width:14px;height:14px;"></i>
+          </div>
+          Track Application
+        </div>
+        <button class="icon-btn" onclick="closeApplicationModal()" aria-label="Close modal">
+          <i data-lucide="x" style="width:15px;height:15px;" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <form id="app-form" onsubmit="handleSaveApplication(event)" class="modal-body" novalidate>
         <input type="hidden" id="form-app-id">
         <input type="hidden" id="form-lead-id">
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="flex flex-col gap-1.5">
-            <label for="form-company" class="text-xs font-medium text-slate-200">Company *</label>
-            <input type="text" id="form-company" class="input text-xs h-9" required placeholder="e.g. Stripe, Linear, Vercel">
+        <div class="form-row-2">
+          <div class="field">
+            <label class="field-label" for="form-company">Company <abbr title="required">*</abbr></label>
+            <input type="text" id="form-company" class="field-input" required placeholder="Stripe, Linear, Vercel…" autocomplete="organization">
           </div>
-          <div class="flex flex-col gap-1.5">
-            <label for="form-role" class="text-xs font-medium text-slate-200">Role / Job Title *</label>
-            <input type="text" id="form-role" class="input text-xs h-9" required placeholder="e.g. Senior Software Engineer">
+          <div class="field">
+            <label class="field-label" for="form-role">Role <abbr title="required">*</abbr></label>
+            <input type="text" id="form-role" class="field-input" required placeholder="Senior Software Engineer" autocomplete="off">
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="flex flex-col gap-1.5">
-            <label for="form-status" class="text-xs font-medium text-slate-200">Pipeline Stage</label>
-            <select id="form-status" class="input text-xs h-9 bg-slate-900">
-              <option value="wishlist">📌 Wishlist</option>
-              <option value="applied" selected>📤 Applied</option>
-              <option value="screening">📞 Screening (Phone Screen)</option>
-              <option value="interviewing">💻 Interviewing (Tech/Onsite)</option>
-              <option value="offer">🎉 Offer Received</option>
-              <option value="rejected">❌ Closed</option>
+        <div class="form-row-2">
+          <div class="field">
+            <label class="field-label" for="form-status">Stage</label>
+            <select id="form-status" class="field-input field-select">
+              <option value="wishlist">Wishlist</option>
+              <option value="applied" selected>Applied</option>
+              <option value="screening">Screening</option>
+              <option value="interviewing">Interviewing</option>
+              <option value="offer">Offer</option>
+              <option value="rejected">Closed</option>
             </select>
           </div>
-          <div class="flex flex-col gap-1.5">
-            <label for="form-applied-date" class="text-xs font-medium text-slate-200">Date Applied</label>
-            <input type="date" id="form-applied-date" class="input text-xs h-9">
+          <div class="field">
+            <label class="field-label" for="form-applied-date">Date applied</label>
+            <input type="date" id="form-applied-date" class="field-input">
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="flex flex-col gap-1.5">
-            <label for="form-source" class="text-xs font-medium text-slate-200">Source</label>
-            <select id="form-source" class="input text-xs h-9 bg-slate-900">
+        <div class="form-row-2">
+          <div class="field">
+            <label class="field-label" for="form-source">Source</label>
+            <select id="form-source" class="field-input field-select">
               <option value="ashby">Ashby</option>
               <option value="greenhouse">Greenhouse</option>
               <option value="lever">Lever</option>
               <option value="workable">Workable</option>
-              <option value="google-dork">Google Dork (Serper)</option>
+              <option value="google-dork">Google Dork</option>
               <option value="yc">Y Combinator</option>
               <option value="hackernews">Hacker News</option>
               <option value="weworkremotely">We Work Remotely</option>
               <option value="reddit">Reddit</option>
-              <option value="referral">Referral / Network</option>
-              <option value="manual">Company Site / Other</option>
+              <option value="referral">Referral</option>
+              <option value="manual">Company site / Other</option>
             </select>
           </div>
-          <div class="flex flex-col gap-1.5">
-            <label for="form-salary" class="text-xs font-medium text-slate-200">Salary / Compensation</label>
-            <input type="text" id="form-salary" class="input text-xs h-9" placeholder="e.g. $160,000 - $190,000">
+          <div class="field">
+            <label class="field-label" for="form-salary">Compensation</label>
+            <input type="text" id="form-salary" class="field-input" placeholder="$160k–$190k">
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="flex flex-col gap-1.5">
-            <label for="form-location" class="text-xs font-medium text-slate-200">Location</label>
-            <input type="text" id="form-location" class="input text-xs h-9" placeholder="e.g. Remote (US), San Francisco, London">
+        <div class="form-row-2">
+          <div class="field">
+            <label class="field-label" for="form-location">Location</label>
+            <input type="text" id="form-location" class="field-input" placeholder="Remote, London, NYC…">
           </div>
-          <div class="flex flex-col gap-1.5">
-            <label for="form-job-url" class="text-xs font-medium text-slate-200">Job Posting URL</label>
-            <input type="url" id="form-job-url" class="input text-xs h-9" placeholder="https://...">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="flex flex-col gap-1.5">
-            <label for="form-contact-name" class="text-xs font-medium text-slate-200">Contact / Recruiter Name</label>
-            <input type="text" id="form-contact-name" class="input text-xs h-9" placeholder="e.g. Sarah Connor">
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <label for="form-contact-email" class="text-xs font-medium text-slate-200">Contact Email / LinkedIn</label>
-            <input type="text" id="form-contact-email" class="input text-xs h-9" placeholder="e.g. sarah@company.com">
+          <div class="field">
+            <label class="field-label" for="form-job-url">Job URL</label>
+            <input type="url" id="form-job-url" class="field-input" placeholder="https://…">
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="flex flex-col gap-1.5">
-            <label for="form-next-step" class="text-xs font-medium text-slate-200">Next Step / Action Item</label>
-            <input type="text" id="form-next-step" class="input text-xs h-9" placeholder="e.g. System Design interview round">
+        <div class="form-row-2">
+          <div class="field">
+            <label class="field-label" for="form-contact-name">Contact name</label>
+            <input type="text" id="form-contact-name" class="field-input" placeholder="Sarah Connor">
           </div>
-          <div class="flex flex-col gap-1.5">
-            <label for="form-next-step-date" class="text-xs font-medium text-slate-200">Next Step Date</label>
-            <input type="date" id="form-next-step-date" class="input text-xs h-9">
+          <div class="field">
+            <label class="field-label" for="form-contact-email">Contact email / LinkedIn</label>
+            <input type="text" id="form-contact-email" class="field-input" placeholder="sarah@company.com">
           </div>
         </div>
 
-        <div class="flex flex-col gap-1.5">
-          <label for="form-notes" class="text-xs font-medium text-slate-200">Notes, Questions & Preparation</label>
-          <textarea id="form-notes" class="input text-xs min-h-[85px] py-2 leading-relaxed" placeholder="Tech stack, interview prep, team notes..."></textarea>
+        <div class="form-row-2">
+          <div class="field">
+            <label class="field-label" for="form-next-step">Next step</label>
+            <input type="text" id="form-next-step" class="field-input" placeholder="System design round…">
+          </div>
+          <div class="field">
+            <label class="field-label" for="form-next-step-date">Next step date</label>
+            <input type="date" id="form-next-step-date" class="field-input">
+          </div>
         </div>
 
-        <div class="flex items-center justify-end gap-2 border-t border-white/10 pt-4 mt-2">
-          <button type="button" class="btn" data-variant="outline" data-size="sm" onclick="closeApplicationModal()">Cancel</button>
-          <button type="submit" class="btn" data-variant="default" data-size="sm" id="btn-save-app">Save Application</button>
+        <div class="field">
+          <label class="field-label" for="form-notes">Notes</label>
+          <textarea id="form-notes" class="field-input field-textarea" placeholder="Tech stack, prep notes, team impressions…"></textarea>
         </div>
+
       </form>
+
+      <div class="modal-foot">
+        <button type="button" class="btn-ghost btn-sm" onclick="closeApplicationModal()">Cancel</button>
+        <button type="submit" form="app-form" class="btn-primary btn-sm" id="btn-save-app">Save application</button>
+      </div>
     </div>
   </div>
 
-  <!-- MODAL: Settings -->
-  <div class="modal-backdrop" id="settings-modal" style="display: none;">
-    <div class="modal-card max-w-md">
-      <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
-        <div class="flex items-center gap-2">
-          <i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i>
-          <h3 class="text-sm font-semibold text-white">Scanner Settings</h3>
+  <!-- =============================================
+       MODAL: Settings
+       ============================================= -->
+  <div class="modal-backdrop" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title" style="display:none;">
+    <div class="modal modal-sm" role="document">
+      <div class="modal-head">
+        <div class="modal-title" id="settings-modal-title">
+          <div class="modal-icon" aria-hidden="true">
+            <i data-lucide="settings-2" style="width:14px;height:14px;"></i>
+          </div>
+          Settings
         </div>
-        <button type="button" class="btn" data-variant="ghost" data-size="icon" onclick="closeSettingsModal()" aria-label="Close">
-          <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
+        <button class="icon-btn" onclick="closeSettingsModal()" aria-label="Close settings">
+          <i data-lucide="x" style="width:15px;height:15px;" aria-hidden="true"></i>
         </button>
       </div>
-      <div class="p-6 flex flex-col gap-3">
-        <label for="setting-api-url" class="text-xs font-medium text-slate-200">Encore API Base URL</label>
-        <input type="text" id="setting-api-url" class="input text-xs h-9" placeholder="http://localhost:4000">
-        <p class="text-[11px] text-slate-400 leading-normal">
-          Defaults to the active hosting domain when running on Encore Cloud, or http://localhost:4000 for local development.
-        </p>
+      <div class="modal-body">
+        <div class="field">
+          <label class="field-label" for="setting-api-url">API base URL</label>
+          <input type="text" id="setting-api-url" class="field-input" placeholder="http://localhost:4000" autocomplete="url">
+          <p class="field-hint">Defaults to the current origin when deployed, or <code>localhost:4000</code> locally.</p>
+        </div>
       </div>
-      <div class="flex items-center justify-end gap-2 border-t border-white/10 px-6 py-4">
-        <button type="button" class="btn" data-variant="outline" data-size="sm" onclick="closeSettingsModal()">Cancel</button>
-        <button type="submit" class="btn" data-variant="default" data-size="sm" onclick="saveSettings()">Save & Reconnect</button>
+      <div class="modal-foot">
+        <button type="button" class="btn-ghost btn-sm" onclick="closeSettingsModal()">Cancel</button>
+        <button type="button" class="btn-primary btn-sm" onclick="saveSettings()">Save &amp; reconnect</button>
       </div>
     </div>
   </div>
 
-  <!-- Toast Notification Container -->
-  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+  <!-- Toast container -->
+  <div id="toast-container" role="region" aria-live="polite" aria-label="Notifications"></div>
+
+  <!-- Visually hidden utility -->
+  <style>
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+  </style>
 
   <script src="app.js"></script>
 </body>
