@@ -21,9 +21,31 @@ type redditListing struct {
 }
 
 type redditPost struct {
+	ID          string  `json:"id"`
+	Title       string  `json:"title"`
+	Selftext    string  `json:"selftext"`
+	Author      string  `json:"author"`
+	Permalink   string  `json:"permalink"`
+	Score       int     `json:"score"`
+	CreatedUTC  float64 `json:"created_utc"`
+	NumComments int     `json:"num_comments"`
+}
+
+// redditCommentListing captures the response of /comments/{id}.json.
+// Reddit returns a JSON array of two Listing objects: the first contains the post,
+// and the second contains top-level comments.
+type redditCommentListing []struct {
+	Data struct {
+		Children []struct {
+			Kind string        `json:"kind"`
+			Data redditComment `json:"data"`
+		} `json:"children"`
+	} `json:"data"`
+}
+
+type redditComment struct {
 	ID         string  `json:"id"`
-	Title      string  `json:"title"`
-	Selftext   string  `json:"selftext"`
+	Body       string  `json:"body"`
 	Author     string  `json:"author"`
 	Permalink  string  `json:"permalink"`
 	Score      int     `json:"score"`
@@ -170,6 +192,78 @@ func doRedditRequest(req *http.Request, subreddit string) ([]redditPost, error) 
 		posts = append(posts, c.Data)
 	}
 	return posts, nil
+}
+
+// fetchPostComments pulls top-level comments for a specific post.
+// Sourced like reddit-outreach-bot: limits to top 10 comments and checks
+// both OAuth and anonymous fallback.
+func fetchPostComments(subreddit, postID string) ([]redditComment, error) {
+	if comments, err := fetchPostCommentsOAuth(subreddit, postID); err == nil {
+		return comments, nil
+	}
+	return fetchPostCommentsAnonymous(subreddit, postID)
+}
+
+func fetchPostCommentsOAuth(subreddit, postID string) ([]redditComment, error) {
+	token, err := redditAccessToken()
+	if err != nil {
+		return nil, fmt.Errorf("getting reddit access token: %w", err)
+	}
+
+	reqURL := fmt.Sprintf("https://oauth.reddit.com/r/%s/comments/%s?limit=10", subreddit, postID)
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("User-Agent", redditUserAgent)
+
+	return doRedditCommentsRequest(req, subreddit, postID)
+}
+
+func fetchPostCommentsAnonymous(subreddit, postID string) ([]redditComment, error) {
+	reqURL := fmt.Sprintf("https://old.reddit.com/r/%s/comments/%s.json?limit=10", subreddit, postID)
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
+
+	return doRedditCommentsRequest(req, subreddit, postID)
+}
+
+func doRedditCommentsRequest(req *http.Request, subreddit, postID string) ([]redditComment, error) {
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("fetching comments for r/%s post %s: %w", subreddit, postID, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("comments for r/%s post %s returned status %d", subreddit, postID, resp.StatusCode)
+	}
+
+	var listing redditCommentListing
+	if err := json.NewDecoder(resp.Body).Decode(&listing); err != nil {
+		return nil, fmt.Errorf("decoding comments for r/%s post %s: %w", subreddit, postID, err)
+	}
+
+	if len(listing) < 2 {
+		return nil, nil
+	}
+
+	comments := make([]redditComment, 0, len(listing[1].Data.Children))
+	for _, c := range listing[1].Data.Children {
+		if c.Kind != "t1" {
+			continue
+		}
+		if c.Data.Author == "" || c.Data.Author == "[deleted]" || strings.TrimSpace(c.Data.Body) == "" {
+			continue
+		}
+		comments = append(comments, c.Data)
+	}
+	return comments, nil
 }
 
 // matchKeywordText returns the first configured keyword found anywhere in

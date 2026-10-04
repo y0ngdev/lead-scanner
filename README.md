@@ -9,7 +9,7 @@ hand.
 
 | Source | How it works | Reliability |
 |---|---|---|
-| Reddit | Public `/new.json` listing per subreddit, no auth | Stable |
+| Reddit | Authenticated OAuth (with anonymous JSON fallback); scans both post titles/bodies and top comments | Stable |
 | Hacker News | Official Algolia HN API, latest Who's Hiring thread | Stable |
 | We Work Remotely | Public RSS feed, remote-programming category | Stable |
 | YC jobs | Best-effort HTML scrape of `ycombinator.com/jobs` | Fragile — no official API |

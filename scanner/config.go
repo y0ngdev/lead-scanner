@@ -6,11 +6,14 @@ var subreddits = []string{
 	"forhire",
 	"freelance",
 	"webdev",
+	"webdesign",
+	"website",
 	"golang",
 	"fintech",
 	"Entrepreneur",
 	"startups",
 	"technicalwriting",
+	"NoStupidQuestions",
 }
 
 // Keywords that suggest someone is looking to hire, not just chatting.
@@ -51,6 +54,12 @@ var keywords = []string{
 	"remote role",
 	"remote position",
 	"hiring remote",
+	// High-intent website gig keywords (from reddit-outreach-bot)
+	"need website",
+	"need a website",
+	"need site",
+	"build website",
+	"make me a website",
 }
 
 // ATS (applicant tracking system) company boards to poll for new postings.

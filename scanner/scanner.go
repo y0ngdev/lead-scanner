@@ -52,17 +52,18 @@ type Lead struct {
 // ScanResult summarizes the outcome of a scan run, broken down by source
 // since each has very different volume and failure modes.
 type ScanResult struct {
-	RedditPostsChecked int `json:"reddit_posts_checked"`
-	HNCommentsChecked  int `json:"hn_comments_checked"`
-	YCJobsChecked      int `json:"yc_jobs_checked"`
-	WWRJobsChecked     int `json:"wwr_jobs_checked"`
-	DevRelJobsChecked  int `json:"devrel_jobs_checked"`
-	GreenhouseChecked  int `json:"greenhouse_checked"`
-	LeverChecked       int `json:"lever_checked"`
-	AshbyChecked       int `json:"ashby_checked"`
-	WorkableChecked    int `json:"workable_checked"`
-	GoogleDorkChecked  int `json:"google_dork_checked"`
-	NewLeads           int `json:"new_leads"`
+	RedditPostsChecked    int `json:"reddit_posts_checked"`
+	RedditCommentsChecked int `json:"reddit_comments_checked"`
+	HNCommentsChecked     int `json:"hn_comments_checked"`
+	YCJobsChecked         int `json:"yc_jobs_checked"`
+	WWRJobsChecked        int `json:"wwr_jobs_checked"`
+	DevRelJobsChecked     int `json:"devrel_jobs_checked"`
+	GreenhouseChecked     int `json:"greenhouse_checked"`
+	LeverChecked          int `json:"lever_checked"`
+	AshbyChecked          int `json:"ashby_checked"`
+	WorkableChecked       int `json:"workable_checked"`
+	GoogleDorkChecked     int `json:"google_dork_checked"`
+	NewLeads              int `json:"new_leads"`
 }
 
 // Scan checks Reddit, HN's Who's Hiring thread, and YC's jobs page for
@@ -103,6 +104,42 @@ func Scan(ctx context.Context) (*ScanResult, error) {
 			if lead != nil {
 				result.NewLeads++
 				newLeads = append(newLeads, *lead)
+			}
+
+			// Scan post comments if any exist (mirroring reddit-outreach-bot logic)
+			if p.NumComments > 0 {
+				comments, err := fetchPostComments(sub, p.ID)
+				if err != nil {
+					rlog.Debug("failed to fetch reddit comments", "subreddit", sub, "post_id", p.ID, "err", err)
+				} else {
+					for _, cm := range comments {
+						result.RedditCommentsChecked++
+						commentURL := "https://reddit.com" + cm.Permalink
+						if cm.Permalink == "" {
+							commentURL = "https://reddit.com" + p.Permalink
+						}
+						cc := candidate{
+							Source:     "reddit",
+							Subreddit:  sub,
+							ExternalID: "reddit:comment:" + cm.ID,
+							Title:      "Comment on: " + p.Title,
+							Body:       cm.Body,
+							Author:     cm.Author,
+							URL:        commentURL,
+							Score:      cm.Score,
+							CreatedUTC: time.Unix(int64(cm.CreatedUTC), 0).UTC(),
+						}
+						clead, err := processCandidate(ctx, cc)
+						if err != nil {
+							rlog.Error("failed to process reddit comment candidate", "id", cm.ID, "err", err)
+							continue
+						}
+						if clead != nil {
+							result.NewLeads++
+							newLeads = append(newLeads, *clead)
+						}
+					}
+				}
 			}
 		}
 	}
@@ -274,7 +311,8 @@ func Scan(ctx context.Context) (*ScanResult, error) {
 	}
 
 	rlog.Info("scan complete",
-		"reddit_checked", result.RedditPostsChecked,
+		"reddit_posts_checked", result.RedditPostsChecked,
+		"reddit_comments_checked", result.RedditCommentsChecked,
 		"hn_checked", result.HNCommentsChecked,
 		"yc_checked", result.YCJobsChecked,
 		"wwr_checked", result.WWRJobsChecked,
@@ -300,6 +338,9 @@ func Scan(ctx context.Context) (*ScanResult, error) {
 // new match, stores it and returns the resulting Lead. Returns (nil, nil)
 // if there's no match or the candidate was already known.
 func processCandidate(ctx context.Context, c candidate) (*Lead, error) {
+	if c.Author == "" || c.Author == "[deleted]" {
+		return nil, nil
+	}
 	kw, ok := matchKeywordText(c.Title + " " + c.Body)
 	if !ok {
 		return nil, nil
