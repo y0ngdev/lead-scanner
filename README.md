@@ -49,7 +49,16 @@ Two sources were deliberately left out:
    ```
    encore secret set ResendAPIKey
    ```
-3. *(Optional)* Get a free Serper.dev API key at [serper.dev](https://serper.dev)
+3. Set up Reddit OAuth (recommended to avoid Reddit's datacenter IP block):
+   - Register a free **"script"** app at [reddit.com/prefs/apps](https://www.reddit.com/prefs/apps).
+   - Set redirect URI to `http://localhost:8080`.
+   - Set the credentials in Encore:
+     ```bash
+     encore secret set RedditClientID
+     encore secret set RedditClientSecret
+     ```
+     *(Or add them to a `.secrets.local.cue` file at the project root for offline local development)*.
+4. *(Optional)* Get a free Serper.dev API key at [serper.dev](https://serper.dev)
    (free tier: 2,500 searches/month, no card needed) to enable Google Dork
    scanning across all ATS platforms:
    ```
@@ -57,8 +66,8 @@ Two sources were deliberately left out:
    ```
    Without this key the Google Dork source is silently skipped — everything
    else continues to work normally.
-4. Edit `notifyEmail` in `scanner/email.go` to your own address.
-5. From this directory:
+5. Edit `notifyEmail` in `scanner/email.go` to your own address.
+6. From this directory:
    ```
    encore run
    ```

@@ -2,3 +2,6 @@ encore.gen.go
 encore.gen.cue
 /.encore
 /encore.gen
+.secrets.local.cue
+config.bat
+node_modules

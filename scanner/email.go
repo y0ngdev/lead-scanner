@@ -42,6 +42,9 @@ const emailFrom = "Lead Scanner <onboarding@resend.dev>"
 // sendLeadDigest emails a summary of newly found leads. No-op if there
 // are no new leads, so a normal scan with nothing new sends no email.
 func sendLeadDigest(ctx context.Context, leads []Lead) error {
+	// email sending disabled
+	return nil
+
 	if len(leads) == 0 {
 		return nil
 	}
